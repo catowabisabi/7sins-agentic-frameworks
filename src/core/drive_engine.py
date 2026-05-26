@@ -88,6 +88,20 @@ class DriveEngine(ABC):
         self.state.weight = max(0.1, min(1.0, self.state.weight + delta))
     
     def get_veto_power(self) -> float:
+        """
+        Calculate the veto power for this drive engine.
+        
+        Returns 1.0 (100% veto) if:
+        - The engine's veto_condition is satisfied (high risk opinion)
+        - Otherwise returns weighted score based on state
+        """
+        # Safety veto: check if recent high-risk opinion exists
+        recent_opinions = self.get_recent_opinions(limit=1)
+        if recent_opinions:
+            latest_opinion = recent_opinions[0]
+            if latest_opinion.risk_level == "high":
+                return 1.0
+        
         return self.state.weight * (1.0 if self.state.veto_used else 0.5)
     
     def reset_for_new_task(self):
