@@ -34,6 +34,18 @@ class DriveState:
     veto_used: bool = False
     eros_weight: float = 0.5
     thanatos_weight: float = 0.5
+    # Weight evolution tracking
+    weight_history: List[float] = field(default_factory=list)
+    decision_wins: int = 0
+    decision_losses: int = 0
+    
+    # Constants for weight bounds
+    MIN_WEIGHT: float = 0.1
+    MAX_WEIGHT: float = 0.95
+    DOMINANCE_THRESHOLD: float = 0.6  # 60% of decisions
+    DECAY_RATE: float = 0.05
+    SUPPRESSION_THRESHOLD: float = 0.1  # <10% wins
+    SUPPRESSION_BOOST: float = 0.08
     
     def activate(self, confidence: float = 0.5):
         self.confidence = confidence
@@ -44,6 +56,34 @@ class DriveState:
         self.contribution_score = 0.0
         self.vote_count = 0
         self.veto_used = False
+    
+    def record_win(self):
+        """Record a decision win for this drive"""
+        self.decision_wins += 1
+        self._add_to_history()
+    
+    def record_loss(self):
+        """Record a decision loss for this drive"""
+        self.decision_losses += 1
+    
+    def _add_to_history(self):
+        """Add current weight to history for tracking"""
+        self.weight_history.append(self.weight)
+        # Keep history bounded to last 100 entries
+        if len(self.weight_history) > 100:
+            self.weight_history.pop(0)
+    
+    def get_win_rate(self) -> float:
+        """Calculate win rate for this drive"""
+        total = self.decision_wins + self.decision_losses
+        if total == 0:
+            return 0.0
+        return self.decision_wins / total
+    
+    def get_dominance_ratio(self) -> float:
+        """Get this drive's share of total decisions"""
+        # This should be calculated at registry level for all drives
+        return 0.0  # Placeholder, actual calculation happens at registry
 
 
 @dataclass
@@ -88,13 +128,19 @@ class DriveEngine(ABC):
     
     def adjust_weight(self, delta: float, drive_direction: str = None):
         old_weight = self.state.weight
-        self.state.weight = max(0.1, min(1.0, self.state.weight + delta))
+        new_weight = self.state.weight + delta
+        # Enforce bounds
+        self.state.weight = max(self.state.MIN_WEIGHT, min(self.state.MAX_WEIGHT, new_weight))
+        # Record in history
+        self.state._add_to_history()
+        # Persist to database
         persistence = get_persistence_manager()
         persistence.log_weight_change(
             self.drive_type.value,
             self.state.weight,
             self.state.weight - old_weight
         )
+        return self.state.weight
     
     def get_veto_power(self) -> float:
         """
@@ -151,3 +197,146 @@ class DriveEngineRegistry:
     
     def get_weights(self) -> Dict[str, float]:
         return {e.drive_type.value: e.state.weight for e in self._engines.values()}
+    
+    def normalize_weights(self) -> Dict[str, float]:
+        """
+        Normalize weights to prevent any single Sin from dominating.
+        
+        Applies dominance decay when a single drive has won >60% of decisions.
+        Applies suppression boost when a drive has won <10% of decisions.
+        
+        Returns dict of drive names to adjustment deltas applied.
+        """
+        adjustments = {}
+        engines = list(self._engines.values())
+        
+        if not engines:
+            return adjustments
+        
+        total_decisions = sum(e.state.decision_wins + e.state.decision_losses for e in engines)
+        if total_decisions < 5:
+            return adjustments
+        
+        max_win_rate = 0.0
+        dominant_engine = None
+        min_win_rate = 1.0
+        suppressed_engine = None
+        
+        for engine in engines:
+            win_rate = engine.state.get_win_rate()
+            if win_rate > max_win_rate:
+                max_win_rate = win_rate
+                dominant_engine = engine
+            if win_rate < min_win_rate and win_rate > 0:
+                min_win_rate = win_rate
+                suppressed_engine = engine
+        
+        if dominant_engine and max_win_rate > dominant_engine.state.DOMINANCE_THRESHOLD:
+            delta = -dominant_engine.state.DECAY_RATE
+            dominant_engine.adjust_weight(delta)
+            adjustments[dominant_engine.drive_type.value] = delta
+        
+        if suppressed_engine and min_win_rate < suppressed_engine.state.SUPPRESSION_THRESHOLD:
+            delta = suppressed_engine.state.SUPPRESSION_BOOST
+            suppressed_engine.adjust_weight(delta)
+            adjustments[suppressed_engine.drive_type.value] = delta
+        
+        return adjustments
+    
+    def adjust_weights(self):
+        """
+        Adjust drive weights based on win rates to prevent stagnation.
+        
+        - If win_rate > DOMINANCE_THRESHOLD (0.6): increase weight (+0.05, max MAX_WEIGHT 0.95)
+        - If win_rate < SUPPRESSION_THRESHOLD (0.1): decrease weight (-0.05, min MIN_WEIGHT 0.1)
+        - Normal range: no change
+        - Stagnation prevention: small random perturbation if no weight change in 20+ history entries
+        """
+        import random
+        
+        engines = list(self._engines.values())
+        if not engines:
+            return
+        
+        total_decisions = sum(e.state.decision_wins + e.state.decision_losses for e in engines)
+        if total_decisions < 5:
+            return  # Not enough data for meaningful adjustment
+        
+        adjustments_made = False
+        
+        for engine in engines:
+            win_rate = engine.state.get_win_rate()
+            
+            if win_rate > engine.state.DOMINANCE_THRESHOLD:
+                # Dominant drive - increase weight
+                delta = 0.05
+                old_weight = engine.state.weight
+                engine.adjust_weight(delta)
+                adjustments_made = True
+            elif win_rate < engine.state.SUPPRESSION_THRESHOLD:
+                # Suppressed drive - decrease weight
+                delta = -0.05
+                old_weight = engine.state.weight
+                engine.adjust_weight(delta)
+                adjustments_made = True
+        
+        # Stagnation prevention: if all drives have 20+ history entries with little variation, apply small perturbation
+        if not adjustments_made:
+            all_stagnated = True
+            for engine in engines:
+                history = engine.state.weight_history
+                if len(history) < 20:
+                    all_stagnated = False
+                    break
+                # Check if weights have remained stable
+                recent_weights = history[-20:]
+                weight_variance = max(recent_weights) - min(recent_weights)
+                if weight_variance > 0.01:  # If there's meaningful variation
+                    all_stagnated = False
+                    break
+            
+            if all_stagnated:
+                # Apply small random perturbation to a random drive
+                target_engine = random.choice(engines)
+                perturbation = random.uniform(-0.02, 0.02)
+                target_engine.adjust_weight(perturbation)
+    
+    def record_decision_outcome(self, winning_drive: DriveType):
+        """Record the outcome of a decision for weight evolution tracking"""
+        for engine in self._engines.values():
+            if engine.drive_type == winning_drive:
+                engine.state.record_win()
+            else:
+                engine.state.record_loss()
+        self.adjust_weights()
+    
+    def get_dominance_report(self) -> Dict[str, Any]:
+        """Get a report on current drive dominance patterns"""
+        engines = list(self._engines.values())
+        total = sum(e.state.decision_wins + e.state.decision_losses for e in engines)
+        
+        if total == 0:
+            return {"status": "no_data", "total_decisions": 0}
+        
+        report = {
+            "total_decisions": total,
+            "drives": {},
+            "dominant": None,
+            "suppressed": []
+        }
+        
+        for engine in engines:
+            win_rate = engine.state.get_win_rate()
+            report["drives"][engine.drive_type.value] = {
+                "wins": engine.state.decision_wins,
+                "losses": engine.state.decision_losses,
+                "win_rate": win_rate,
+                "current_weight": engine.state.weight,
+                "weight_history_len": len(engine.state.weight_history)
+            }
+            if win_rate > engine.state.DOMINANCE_THRESHOLD:
+                report["dominant"] = engine.drive_type.value
+            if win_rate < engine.state.SUPPRESSION_THRESHOLD and total > 10:
+                report["suppressed"].append(engine.drive_type.value)
+        
+        return report
