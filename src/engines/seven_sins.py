@@ -115,6 +115,9 @@ class GluttonyEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.7)
         
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
+        
         task_type = task.get("task_type", "").lower()
         eros_weight = self.state.eros_weight
         thanatos_weight = self.state.thanatos_weight
@@ -177,6 +180,9 @@ class LustEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
         
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
+        
         task_type = task.get("task_type", "").lower()
         eros_weight = self.state.eros_weight
         thanatos_weight = self.state.thanatos_weight
@@ -228,6 +234,9 @@ class GreedEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.8)
+        
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
         
         task_type = task.get("task_type", "").lower()
         eros_weight = self.state.eros_weight
@@ -281,6 +290,9 @@ class SlothEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.7)
         
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
+        
         task_type = task.get("task_type", "").lower()
         eros_weight = self.state.eros_weight
         thanatos_weight = self.state.thanatos_weight
@@ -332,6 +344,9 @@ class PrideEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
+        
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
         
         task_type = task.get("task_type", "").lower()
         eros_weight = self.state.eros_weight
@@ -385,6 +400,9 @@ class WrathEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.9)
         
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
+        
         task_type = task.get("task_type", "").lower()
         eros_weight = self.state.eros_weight
         thanatos_weight = self.state.thanatos_weight
@@ -436,6 +454,9 @@ class EnvyEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.5)
+        
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
         
         task_type = task.get("task_type", "").lower()
         eros_weight = self.state.eros_weight
