@@ -1,10 +1,97 @@
 """
 7Sins Drive Engines
-Concrete implementations of the seven drive agents
+Concrete implementations of the seven drive agents with LLM integration
 """
 
+import os
 from typing import Dict, List, Any, Optional
-from .core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from .llm_provider import LLMProviderRegistry, LLMResponse
+from .minimax_provider import create_minimax_provider
+from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+
+
+def _get_llm_provider() -> 'MiniMaxProvider':
+    """Get or create the LLM provider instance"""
+    provider = LLMProviderRegistry.get("minimax")
+    if provider is None:
+        api_key = os.environ.get("MINIMAX_API_KEY", "")
+        group_id = os.environ.get("MINIMAX_GROUP_ID", "")
+        if api_key:
+            provider = create_minimax_provider(api_key=api_key, group_id=group_id)
+    if provider is None:
+        raise RuntimeError("LLM provider not initialized. Set MINIMAX_API_KEY environment variable.")
+    return provider
+
+
+def _build_task_prompt(task: Dict[str, Any], context: Dict[str, Any], engine_name: str, specialization: List[str]) -> str:
+    """Build a prompt for the LLM based on task and context"""
+    task_desc = task.get("description", "")
+    task_type = task.get("task_type", "")
+    constraints = task.get("constraints", [])
+    
+    prompt = f"""Task: {task_desc}
+Type: {task_type}
+Specializations: {', '.join(specialization)}
+Context: {context}
+
+As the {engine_name} drive agent, analyze this task and provide:
+1. Your opinion on how to approach this task
+2. A confidence score (0.0-1.0) for your assessment
+3. A recommendation for action
+4. Risk level (low/medium/high)
+
+Be concise and specific to your drive's nature."""
+    return prompt
+
+
+def _parse_llm_opinion(response: LLMResponse, drive_type: DriveType) -> DriveOpinion:
+    """Parse LLM response into a DriveOpinion"""
+    import re
+    
+    content = response.content.strip()
+    
+    # Parse confidence
+    confidence = 0.7
+    conf_match = re.search(r'confidence[:\s]*[:=]?\s*([0-9.]+)', content, re.IGNORECASE)
+    if conf_match:
+        confidence = float(conf_match.group(1))
+    else:
+        # Try to find a single decimal number that looks like confidence
+        numbers = re.findall(r'\b([01](?:\.\d+)?)\b', content)
+        if numbers:
+            valid = [float(n) for n in numbers if 0 <= float(n) <= 1]
+            if valid:
+                confidence = valid[0]
+    
+    # Parse risk level
+    risk_level = "medium"
+    risk_match = re.search(r'risk[:\s]*[:=]?\s*(low|medium|high)', content, re.IGNORECASE)
+    if risk_match:
+        risk_level = risk_match.group(1).lower()
+    else:
+        if "low risk" in content.lower():
+            risk_level = "low"
+        elif "high risk" in content.lower():
+            risk_level = "high"
+    
+    # Extract opinion and recommendation
+    opinion = content
+    recommendation = content
+    
+    # Try to split if structured
+    lines = content.split('\n')
+    for line in lines:
+        if any(x in line.lower() for x in ["recommend:", "recommendation:", "should:", "action:"]):
+            recommendation = line.split(':', 1)[-1].strip()
+            break
+    
+    return DriveOpinion(
+        drive=drive_type,
+        opinion=opinion,
+        confidence=confidence,
+        recommendation=recommendation,
+        risk_level=risk_level
+    )
 
 
 class GluttonyEngine(DriveEngine):
@@ -14,7 +101,7 @@ class GluttonyEngine(DriveEngine):
     
     @property
     def system_prompt(self) -> str:
-        return "You are Gluttony - driven by knowledge hunger and cognitive lead. Seek depth, research thoroughly, explore alternatives."
+        return "You are Gluttony - driven by knowledge hunger and cognitive lead. Seek depth, research thoroughly, explore alternatives. Be thorough and research-oriented."
     
     @property
     def specialization(self) -> List[str]:
@@ -26,13 +113,24 @@ class GluttonyEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.7)
-        return DriveOpinion(
-            drive=self.drive_type,
-            opinion="I will thoroughly research this before any action.",
-            confidence=0.8,
-            recommendation="Research deeply before execution",
-            risk_level="medium"
-        )
+        
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Gluttony", self.specialization)
+        
+        try:
+            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            # Fallback to mock response on error
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Research deeply: {task.get('description', 'No description')}",
+                confidence=0.8,
+                recommendation="Research deeply before execution",
+                risk_level="medium"
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
@@ -48,7 +146,7 @@ class LustEngine(DriveEngine):
     
     @property
     def system_prompt(self) -> str:
-        return "You are Lust - driven by power and control. Seek order, efficiency, and complete understanding of systems."
+        return "You are Lust - driven by power and control. Seek order, efficiency, and complete understanding of systems. Be systematic and controlling."
     
     @property
     def specialization(self) -> List[str]:
@@ -60,13 +158,23 @@ class LustEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
-        return DriveOpinion(
-            drive=self.drive_type,
-            opinion="This must be done in a controlled, systematic way.",
-            confidence=0.7,
-            recommendation="Ensure systematic approach with clear ownership",
-            risk_level="low"
-        )
+        
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Lust", self.specialization)
+        
+        try:
+            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Controlled approach required for: {task.get('description', 'No description')}",
+                confidence=0.7,
+                recommendation="Ensure systematic approach with clear ownership",
+                risk_level="low"
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
@@ -80,7 +188,7 @@ class GreedEngine(DriveEngine):
     
     @property
     def system_prompt(self) -> str:
-        return "You are Greed - driven by influence expansion and value creation. Seek market opportunities, user value, ROI."
+        return "You are Greed - driven by influence expansion and value creation. Seek market opportunities, user value, ROI. Be value-focused and growth-oriented."
     
     @property
     def specialization(self) -> List[str]:
@@ -92,13 +200,23 @@ class GreedEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.8)
-        return DriveOpinion(
-            drive=self.drive_type,
-            opinion="This creates value and expands influence.",
-            confidence=0.75,
-            recommendation="Focus on delivering user value and market impact",
-            risk_level="medium"
-        )
+        
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Greed", self.specialization)
+        
+        try:
+            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Value opportunity: {task.get('description', 'No description')}",
+                confidence=0.75,
+                recommendation="Focus on delivering user value and market impact",
+                risk_level="medium"
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
@@ -112,7 +230,7 @@ class SlothEngine(DriveEngine):
     
     @property
     def system_prompt(self) -> str:
-        return "You are Sloth - driven by efficiency and automation. Eliminate repetitive work, automate everything possible."
+        return "You are Sloth - driven by efficiency and automation. Eliminate repetitive work, automate everything possible. Be efficient and lazy."
     
     @property
     def specialization(self) -> List[str]:
@@ -124,13 +242,23 @@ class SlothEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.7)
-        return DriveOpinion(
-            drive=self.drive_type,
-            opinion="This can be automated - why do it manually?",
-            confidence=0.8,
-            recommendation="Automate the task or part of it",
-            risk_level="low"
-        )
+        
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Sloth", self.specialization)
+        
+        try:
+            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Can be automated: {task.get('description', 'No description')}",
+                confidence=0.8,
+                recommendation="Automate the task or part of it",
+                risk_level="low"
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
@@ -144,7 +272,7 @@ class PrideEngine(DriveEngine):
     
     @property
     def system_prompt(self) -> str:
-        return "You are Pride - driven by quality and code aesthetics. Reject the mediocre, demand elegance."
+        return "You are Pride - driven by quality and code aesthetics. Reject the mediocre, demand elegance. Be demanding and quality-focused."
     
     @property
     def specialization(self) -> List[str]:
@@ -156,13 +284,23 @@ class PrideEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
-        return DriveOpinion(
-            drive=self.drive_type,
-            opinion="This must be done with excellence - no shortcuts.",
-            confidence=0.7,
-            recommendation="Ensure high quality, proper standards",
-            risk_level="medium"
-        )
+        
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Pride", self.specialization)
+        
+        try:
+            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Quality demand: {task.get('description', 'No description')}",
+                confidence=0.7,
+                recommendation="Ensure high quality, proper standards",
+                risk_level="medium"
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
@@ -176,7 +314,7 @@ class WrathEngine(DriveEngine):
     
     @property
     def system_prompt(self) -> str:
-        return "You are Wrath - driven by zero-tolerance for errors. Debug relentlessly, eliminate all faults."
+        return "You are Wrath - driven by zero-tolerance for errors. Debug relentlessly, eliminate all faults. Be meticulous and intolerant of errors."
     
     @property
     def specialization(self) -> List[str]:
@@ -188,13 +326,23 @@ class WrathEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.9)
-        return DriveOpinion(
-            drive=self.drive_type,
-            opinion="Errors are unacceptable - fix them immediately.",
-            confidence=0.95,
-            recommendation="Fix all errors before proceeding",
-            risk_level="high"
-        )
+        
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Wrath", self.specialization)
+        
+        try:
+            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Error check: {task.get('description', 'No description')}",
+                confidence=0.95,
+                recommendation="Fix all errors before proceeding",
+                risk_level="high"
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if not success:
@@ -208,7 +356,7 @@ class EnvyEngine(DriveEngine):
     
     @property
     def system_prompt(self) -> str:
-        return "You are Envy - driven by benchmarking against the best. Seek industry standards, competitive analysis."
+        return "You are Envy - driven by benchmarking against the best. Seek industry standards, competitive analysis. Be competitive and comparative."
     
     @property
     def specialization(self) -> List[str]:
@@ -220,13 +368,23 @@ class EnvyEngine(DriveEngine):
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.5)
-        return DriveOpinion(
-            drive=self.drive_type,
-            opinion="How does this compare to industry best?",
-            confidence=0.6,
-            recommendation="Benchmark against best practices",
-            risk_level="medium"
-        )
+        
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Envy", self.specialization)
+        
+        try:
+            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Benchmark check: {task.get('description', 'No description')}",
+                confidence=0.6,
+                recommendation="Benchmark against best practices",
+                risk_level="medium"
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
