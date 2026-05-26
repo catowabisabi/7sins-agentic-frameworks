@@ -8,6 +8,7 @@ from typing import Dict, List, Any, Optional
 from .llm_provider import LLMProviderRegistry, LLMResponse
 from .minimax_provider import create_minimax_provider
 from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from src.tools.search import get_search_tool
 
 
 def _get_llm_provider() -> 'MiniMaxProvider':
@@ -122,6 +123,13 @@ class GluttonyEngine(DriveEngine):
         is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
         
         drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
+        is_research = any(kw in task_type for kw in ["research", "search", "investigate"])
+        if is_research:
+            search_tool = get_search_tool()
+            search_results = search_tool.search(task.get("description", ""), count=10)
+            if search_results:
+                context["search_results"] = search_results
         
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Gluttony", self.specialization)
@@ -437,6 +445,13 @@ class EnvyEngine(DriveEngine):
         is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
         
         drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
+        is_competitive = any(kw in task_type for kw in ["competitor", "benchmark", "compare"])
+        if is_competitive:
+            search_tool = get_search_tool()
+            competitor_results = search_tool.search(task.get("description", ""), count=10)
+            if competitor_results:
+                context["competitor_info"] = competitor_results
         
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Envy", self.specialization)
