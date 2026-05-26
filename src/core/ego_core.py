@@ -102,11 +102,19 @@ class EGOCore:
     
     def _resolve_votes(self) -> Tuple[DriveOpinion, float]:
         drive_scores: Dict[DriveType, float] = {}
+        task_type = self.state.current_task.task_type.lower() if self.state.current_task else ""
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
         
         for drive_type, opinion in self.state.opinions.items():
             engine = self.registry.get(drive_type)
             if engine:
                 score = opinion.confidence * engine.state.weight
+                if is_creation:
+                    score *= engine.state.eros_weight
+                elif is_destruction:
+                    score *= engine.state.thanatos_weight
                 drive_scores[drive_type] = score
         
         winner_type = max(drive_scores, key=drive_scores.get)

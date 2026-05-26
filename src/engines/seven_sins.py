@@ -114,12 +114,22 @@ class GluttonyEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.7)
         
+        task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Gluttony", self.specialization)
         
         try:
             response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
             return opinion
         except Exception as e:
@@ -159,12 +169,22 @@ class LustEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
         
+        task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Lust", self.specialization)
         
         try:
             response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
             return opinion
         except Exception as e:
@@ -201,12 +221,22 @@ class GreedEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.8)
         
+        task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Greed", self.specialization)
         
         try:
             response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
             return opinion
         except Exception as e:
@@ -243,12 +273,22 @@ class SlothEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.7)
         
+        task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Sloth", self.specialization)
         
         try:
             response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
             return opinion
         except Exception as e:
@@ -285,12 +325,22 @@ class PrideEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
         
+        task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Pride", self.specialization)
         
         try:
             response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
             return opinion
         except Exception as e:
@@ -327,12 +377,22 @@ class WrathEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.9)
         
+        task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Wrath", self.specialization)
         
         try:
             response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
             return opinion
         except Exception as e:
@@ -369,12 +429,22 @@ class EnvyEngine(DriveEngine):
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.5)
         
+        task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
+        
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Envy", self.specialization)
         
         try:
             response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
             return opinion
         except Exception as e:

@@ -17,6 +17,8 @@ class DriveType(Enum):
     PRIDE = "pride"
     WRATH = "wrath"
     ENVY = "envy"
+    EROS = "eros"
+    THANATOS = "thanatos"
 
 
 @dataclass
@@ -28,6 +30,8 @@ class DriveState:
     contribution_score: float = 0.0
     vote_count: int = 0
     veto_used: bool = False
+    eros_weight: float = 0.5
+    thanatos_weight: float = 0.5
     
     def activate(self, confidence: float = 0.5):
         self.confidence = confidence
@@ -80,7 +84,7 @@ class DriveEngine(ABC):
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         pass
     
-    def adjust_weight(self, delta: float):
+    def adjust_weight(self, delta: float, drive_direction: str = None):
         self.state.weight = max(0.1, min(1.0, self.state.weight + delta))
     
     def get_veto_power(self) -> float:
