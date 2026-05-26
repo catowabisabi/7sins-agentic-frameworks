@@ -142,6 +142,46 @@ class DriveEngine(ABC):
         )
         return self.state.weight
     
+    def execute(self, task_type: str) -> 'DriveEngine':
+        """
+        Execute the drive engine's primary function based on task type.
+        Adjusts eros_weight and thanatos_weight based on task classification.
+        
+        - Creation tasks (create/build/design/new) increase eros_weight
+        - Deletion tasks (delete/remove/destroy/cleanup) increase thanatos_weight
+        
+        Returns self for method chaining.
+        """
+        task_type_lower = task_type.lower()
+        
+        is_creation = any(kw in task_type_lower for kw in ["create", "build", "design", "new"])
+        is_destruction = any(kw in task_type_lower for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        if is_creation:
+            # Creation increases Eros (life/growth drive)
+            old_eros = self.state.eros_weight
+            self.state.eros_weight = min(0.95, self.state.eros_weight + 0.05)
+            # Persist the change
+            persistence = get_persistence_manager()
+            persistence.log_weight_change(
+                "eros",
+                self.state.eros_weight,
+                self.state.eros_weight - old_eros
+            )
+        elif is_destruction:
+            # Destruction increases Thanatos (death/destruction drive)
+            old_thanatos = self.state.thanatos_weight
+            self.state.thanatos_weight = min(0.95, self.state.thanatos_weight + 0.05)
+            # Persist the change
+            persistence = get_persistence_manager()
+            persistence.log_weight_change(
+                "thanatos",
+                self.state.thanatos_weight,
+                self.state.thanatos_weight - old_thanatos
+            )
+        
+        return self
+
     def get_veto_power(self) -> float:
         """
         Calculate the veto power for this drive engine.
