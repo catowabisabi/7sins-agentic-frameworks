@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 import time
 
+from src.memory.persistence import get_persistence_manager
+
 
 class DriveType(Enum):
     GLUTTONY = "gluttony"
@@ -85,7 +87,14 @@ class DriveEngine(ABC):
         pass
     
     def adjust_weight(self, delta: float, drive_direction: str = None):
+        old_weight = self.state.weight
         self.state.weight = max(0.1, min(1.0, self.state.weight + delta))
+        persistence = get_persistence_manager()
+        persistence.log_weight_change(
+            self.drive_type.value,
+            self.state.weight,
+            self.state.weight - old_weight
+        )
     
     def get_veto_power(self) -> float:
         """

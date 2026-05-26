@@ -11,6 +11,7 @@ import json
 import os
 
 from .drive_engine import DriveEngine, DriveOpinion, DriveType, DriveEngineRegistry
+from src.memory.persistence import get_persistence_manager
 
 
 class AuditLogger:
@@ -139,6 +140,8 @@ class EGOCore:
         
         self.audit_logger.log_decision(result, self.state)
         
+        self._log_decision_to_persistence(result, task)
+        
         return result
     
     def _run_debate(self):
@@ -231,3 +234,28 @@ class EGOCore:
             engine = self.registry.get(winning_drive)
             if engine:
                 engine.on_task_complete(success, feedback)
+    
+    def _log_decision_to_persistence(self, decision: DecisionResult, task: TaskInput):
+        """Log decision to SQLite persistence layer"""
+        winning_drive = "unknown"
+        eros_weight = 0.5
+        thanatos_weight = 0.5
+        
+        if decision.selected_drives:
+            winning_drive = decision.selected_drives[0][0].value
+            engine = self.registry.get(decision.selected_drives[0][0])
+            if engine:
+                eros_weight = engine.state.eros_weight
+                thanatos_weight = engine.state.thanatos_weight
+        
+        weight_snapshot = self.registry.get_weights()
+        
+        persistence = get_persistence_manager()
+        persistence.log_decision(
+            task_description=task.description,
+            winning_drive=winning_drive,
+            confidence=decision.confidence,
+            eros_weight=eros_weight,
+            thanatos_weight=thanatos_weight,
+            weight_snapshot=weight_snapshot
+        )
