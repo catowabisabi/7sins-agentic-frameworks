@@ -7,8 +7,57 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import time
+import json
+import os
 
 from .drive_engine import DriveEngine, DriveOpinion, DriveType, DriveEngineRegistry
+
+
+class AuditLogger:
+    """Structured audit logging for decision events"""
+    
+    def __init__(self, log_dir: str = "logs"):
+        self.log_dir = log_dir
+        os.makedirs(log_dir, exist_ok=True)
+    
+    def log_decision(self, decision: 'DecisionResult', state: 'EGOState'):
+        """Log a decision result with full context"""
+        log_entry = {
+            "event": "decision_made",
+            "timestamp": time.time(),
+            "recommendation": decision.recommendation,
+            "confidence": decision.confidence,
+            "phase": decision.phase.value,
+            "reasoning": decision.reasoning,
+            "selected_drives": [(dt.value, w) for dt, w in decision.selected_drives],
+            "active_drives": [dt.value for dt in state.active_drives],
+            "opinions": {
+                dt.value: {
+                    "confidence": op.confidence,
+                    "risk_level": op.risk_level,
+                    "recommendation": op.recommendation
+                }
+                for dt, op in state.opinions.items()
+            }
+        }
+        
+        log_path = os.path.join(self.log_dir, f"audit_{time.strftime('%Y%m%d')}.log")
+        with open(log_path, "a") as f:
+            f.write(json.dumps(log_entry) + "\n")
+    
+    def log_approval_request(self, decision: 'DecisionResult', approved: bool, reason: str):
+        """Log a human approval request result"""
+        log_entry = {
+            "event": "approval_request",
+            "timestamp": time.time(),
+            "decision_confidence": decision.confidence,
+            "approved": approved,
+            "reason": reason
+        }
+        
+        log_path = os.path.join(self.log_dir, f"audit_{time.strftime('%Y%m%d')}.log")
+        with open(log_path, "a") as f:
+            f.write(json.dumps(log_entry) + "\n")
 
 
 class DecisionPhase(Enum):
@@ -56,6 +105,7 @@ class EGOCore:
         self.state = EGOState()
         self.max_debate_rounds = 3
         self.confidence_threshold = 0.6
+        self.audit_logger = AuditLogger()
     
     def process_task(self, task: TaskInput) -> DecisionResult:
         self.state.current_task = task
@@ -86,6 +136,8 @@ class EGOCore:
         )
         self.state.decision = result
         self.state.last_decision_time = time.time()
+        
+        self.audit_logger.log_decision(result, self.state)
         
         return result
     
@@ -123,8 +175,53 @@ class EGOCore:
         return winner_opinion, drive_scores[winner_type]
     
     def request_human_approval(self) -> bool:
+        """
+        Determine if human approval is required for the current decision.
+        
+        Returns:
+            True if approved (auto-approved or human approves), False if requires human review
+        """
         if not self.state.decision:
+            self.audit_logger.log_approval_request(
+                DecisionResult("", [], 0.0, DecisionPhase.VOTING, "No decision yet"),
+                False,
+                "No decision available"
+            )
             return False
+        
+        decision = self.state.decision
+        
+        # Gate 1: High confidence auto-approves
+        if decision.confidence >= 0.8:
+            self.audit_logger.log_approval_request(
+                decision, True, f"Auto-approved: confidence {decision.confidence} >= 0.8"
+            )
+            return True
+        
+        # Gate 2: Any high risk opinion requires human review
+        for opinion in self.state.opinions.values():
+            if opinion.risk_level == "high":
+                self.audit_logger.log_approval_request(
+                    decision, False, f"Human review required: {opinion.drive.value} has high risk"
+                )
+                return False
+        
+        # Gate 3: Creation tasks with low Eros weight require human review
+        if self.state.current_task:
+            task_type = self.state.current_task.task_type.lower()
+            is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+            if is_creation:
+                eros_engine = self.registry.get(DriveType.EROS)
+                if eros_engine and eros_engine.state.eros_weight < 0.3:
+                    self.audit_logger.log_approval_request(
+                        decision, False, f"Human review required: Creation task with Eros weight {eros_engine.state.eros_weight} < 0.3"
+                    )
+                    return False
+        
+        # Default: approve
+        self.audit_logger.log_approval_request(
+            decision, True, "Approved: passes all safety gates"
+        )
         return True
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
