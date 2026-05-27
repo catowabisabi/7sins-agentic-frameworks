@@ -127,6 +127,8 @@ class EGOCore:
         self.state.phase = DecisionPhase.VOTING
         winner = self._resolve_votes()
         
+        self.registry.record_decision_outcome(winner[0].drive)
+        
         self.state.phase = DecisionPhase.EXECUTION
         result = DecisionResult(
             recommendation=winner[0].recommendation,
