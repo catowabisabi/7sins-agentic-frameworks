@@ -4,11 +4,116 @@ Concrete implementations of the seven drive agents with LLM integration
 """
 
 import os
+import time
+import logging
 from typing import Dict, List, Any, Optional
 from .llm_provider import LLMProviderRegistry, LLMResponse
 from .minimax_provider import create_minimax_provider
 from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
 from src.tools.search import get_search_tool
+
+logger = logging.getLogger(__name__)
+
+# Retry configuration
+MAX_RETRIES = 3
+INITIAL_BACKOFF = 1.0  # seconds
+MAX_BACKOFF = 10.0  # seconds
+BACKOFF_MULTIPLIER = 2.0
+
+
+def _is_transient_error(e: Exception) -> bool:
+    """Determine if an exception is a transient error that should be retried.
+    
+    Transient errors include:
+    - Timeout errors
+    - 5xx server errors
+    - Connection errors
+    - Rate limiting (429)
+    """
+    error_str = str(e).lower()
+    error_type = type(e).__name__.lower()
+    
+    # Timeout indicators
+    if any(x in error_str for x in ["timeout", "timed out", "deadline exceeded", "request timeout"]):
+        return True
+    if "timeout" in error_type:
+        return True
+    
+    # HTTP 5xx server errors
+    if hasattr(e, "status_code"):
+        return 500 <= getattr(e, "status_code", 0) <= 599
+    if hasattr(e, "response") and hasattr(e.response, "status_code"):
+        return 500 <= e.response.status_code <= 599
+    
+    # Connection errors
+    if any(x in error_str for x in ["connection", "network", "refused", "unreachable", "reset"]):
+        return True
+    if any(x in error_type for x in ["connectionerror", "httperror", "requesterror"]):
+        return True
+    
+    # Rate limiting
+    if hasattr(e, "status_code") and getattr(e, "status_code", 0) == 429:
+        return True
+    if "rate limit" in error_str or "429" in error_str:
+        return True
+    
+    # Temporary unavailable
+    if any(x in error_str for x in ["unavailable", "temporary", "service unavailable"]):
+        return True
+    
+    return False
+
+
+def _call_llm_with_retry(provider, prompt: str, system_prompt: str, max_retries: int = MAX_RETRIES) -> LLMResponse:
+    """Call LLM provider with exponential backoff retry for transient failures.
+    
+    Args:
+        provider: The LLM provider instance
+        prompt: The user prompt
+        system_prompt: The system prompt
+        max_retries: Maximum number of retry attempts (default: MAX_RETRIES)
+    
+    Returns:
+        LLMResponse from the provider
+    
+    Raises:
+        Exception: The last encountered exception if all retries fail
+    """
+    last_exception = None
+    backoff = INITIAL_BACKOFF
+    
+    for attempt in range(max_retries):
+        try:
+            response = provider.complete(prompt=prompt, system_prompt=system_prompt)
+            if attempt > 0:
+                logger.info(f"LLM request succeeded after {attempt + 1} attempts")
+            return response
+        except Exception as e:
+            last_exception = e
+            if _is_transient_error(e) and attempt < max_retries - 1:
+                logger.warning(
+                    f"LLM request attempt {attempt + 1}/{max_retries} failed with transient "
+                    f"error ({type(e).__name__}): {e}. Retrying in {backoff:.1f}s..."
+                )
+                time.sleep(backoff)
+                backoff = min(backoff * BACKOFF_MULTIPLIER, MAX_BACKOFF)
+            else:
+                # Non-transient error or max retries reached
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        f"LLM request attempt {attempt + 1}/{max_retries} failed with "
+                        f"non-transient error ({type(e).__name__}): {e}"
+                    )
+                # Don't retry for non-transient or we've exhausted retries
+                break
+    
+    # All retries exhausted or non-transient error
+    if last_exception is not None:
+        logger.error(
+            f"LLM request failed after {max_retries} attempts. "
+            f"Last error ({type(last_exception).__name__}): {last_exception}"
+        )
+        raise last_exception
 
 
 def _get_llm_provider() -> 'MiniMaxProvider':
@@ -144,13 +249,13 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
         prompt = _build_task_prompt(task, context, "Gluttony", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
             return opinion
         except Exception as e:
-            # Fallback to mock response on error
+            # Fallback to mock response on error after retries exhausted
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Research deeply: {task.get('description', 'No description')}",
@@ -210,7 +315,7 @@ Your ideal outcome: Clear ownership maps, explicit permission flows, auditable c
         prompt = _build_task_prompt(task, context, "Lust", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
@@ -273,7 +378,7 @@ You execute a mental arbitrage: seeking maximum value extraction per unit of inv
         prompt = _build_task_prompt(task, context, "Greed", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
@@ -336,7 +441,7 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
         prompt = _build_task_prompt(task, context, "Sloth", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
@@ -399,7 +504,7 @@ Your standard: You will be remembered by the weakest thing you allowed to pass. 
         prompt = _build_task_prompt(task, context, "Pride", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
@@ -462,7 +567,7 @@ Your standard: Any error present = fix required. No compromise, no 'good enough 
         prompt = _build_task_prompt(task, context, "Wrath", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
@@ -532,7 +637,7 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
         prompt = _build_task_prompt(task, context, "Envy", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
