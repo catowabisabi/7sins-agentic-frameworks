@@ -80,10 +80,26 @@ class DriveState:
             return 0.0
         return self.decision_wins / total
     
-    def get_dominance_ratio(self) -> float:
-        """Get this drive's share of total decisions"""
-        # This should be calculated at registry level for all drives
-        return 0.0  # Placeholder, actual calculation happens at registry
+    def get_dominance_ratio(self, total_decisions: int = None) -> float:
+        """Get this drive's share of total decisions.
+        
+        Args:
+            total_decisions: Total decisions across all drives. If None, calculated
+                           from this drive's wins + losses (meaning only this drive
+                           participated in decisions).
+        
+        Returns:
+            Ratio of this drive's decisions to total decisions (0.0 to 1.0).
+        """
+        if total_decisions is None:
+            total_decisions = self.decision_wins + self.decision_losses
+        
+        if total_decisions == 0:
+            return 0.0
+        
+        # This drive's share = this drive's total decisions / all drives' total decisions
+        this_drive_total = self.decision_wins + self.decision_losses
+        return this_drive_total / total_decisions
 
 
 @dataclass
