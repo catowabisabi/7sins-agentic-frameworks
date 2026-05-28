@@ -11,6 +11,30 @@ from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
 from src.tools.search import get_search_tool
 
 
+class _MockLLMProvider:
+    """Mock LLM provider for when no API key is configured"""
+    
+    def __init__(self):
+        import logging
+        self.logger = logging.getLogger(__name__)
+        self.logger.warning(
+            "No LLM API key configured. Using mock provider. "
+            "Set MINIMAX_API_KEY and MINIMAX_GROUP_ID environment variables for real LLM calls."
+        )
+    
+    def complete(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> 'LLMResponse':
+        from .llm_provider import LLMResponse
+        return LLMResponse(
+            content="[Mock] LLM call skipped - no API key configured. Set MINIMAX_API_KEY to enable.",
+            model="mock",
+            tokens_used=0,
+            finish_reason="mock"
+        )
+    
+    def chat(self, messages: List[Dict[str, str]], **kwargs) -> 'LLMResponse':
+        return self.complete(str(messages))
+
+
 def _get_llm_provider() -> 'MiniMaxProvider':
     """Get or create the LLM provider instance"""
     provider = LLMProviderRegistry.get("minimax")
@@ -20,7 +44,12 @@ def _get_llm_provider() -> 'MiniMaxProvider':
         if api_key:
             provider = create_minimax_provider(api_key=api_key, group_id=group_id)
     if provider is None:
-        raise RuntimeError("LLM provider not initialized. Set MINIMAX_API_KEY environment variable.")
+        import logging
+        logging.getLogger(__name__).warning(
+            "LLM provider not initialized. Using mock provider. "
+            "Set MINIMAX_API_KEY and MINIMAX_GROUP_ID environment variables for real LLM calls."
+        )
+        provider = _MockLLMProvider()
     return provider
 
 
