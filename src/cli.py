@@ -1,4 +1,5 @@
 from typing import Optional
+import time
 import sys
 
 from .core.drive_engine import DriveEngineRegistry
@@ -44,7 +45,7 @@ class SevenSinsCLI:
             drive_weights={str(d): w for d, w in result.selected_drives},
             outcome="success",
             outcome_confidence=result.confidence,
-            timestamp=0.0
+            timestamp=time.time()
         )
         self.reflector.record_decision(record)
         
