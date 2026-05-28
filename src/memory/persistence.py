@@ -6,6 +6,7 @@ SQLite-based storage for decision history and drive weight evolution
 import sqlite3
 import json
 import os
+import threading
 from typing import Optional, Dict, Any
 from datetime import datetime
 
@@ -14,20 +15,26 @@ class PersistenceManager:
     """SQLite persistence for decision logs and drive weight history"""
     
     _instance: Optional['PersistenceManager'] = None
-    _db_path: str = "7Sins_manager_state/persistence.db"
+    _lock: threading.Lock = threading.Lock()
+    _db_path: str = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..", "..", "7Sins_manager_state", "persistence.db"
+    )
     
     def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._initialized = False
+            return cls._instance
     
     def __init__(self):
-        if self._initialized:
-            return
-        self._initialized = True
-        self._ensure_db_dir()
-        self._init_tables()
+        with self._lock:
+            if self._initialized:
+                return
+            self._initialized = True
+            self._ensure_db_dir()
+            self._init_tables()
     
     def _ensure_db_dir(self):
         db_dir = os.path.dirname(self._db_path)
@@ -185,3 +192,66 @@ class PersistenceManager:
 def get_persistence_manager() -> PersistenceManager:
     """Get the singleton persistence manager instance"""
     return PersistenceManager()
+
+
+# =============================================================================
+# Concurrent Access Test
+# =============================================================================
+
+if __name__ == "__main__":
+    import concurrent.futures
+    import tempfile
+    
+    def test_concurrent_access():
+        """Test thread-safe singleton access from multiple threads."""
+        errors = []
+        results = []
+        
+        def worker(thread_id):
+            try:
+                pm = PersistenceManager()
+                pm.log_decision(
+                    task_description=f"Test task from thread {thread_id}",
+                    winning_drive="eros",
+                    confidence=0.8,
+                    eros_weight=0.6,
+                    thanatos_weight=0.4,
+                    weight_snapshot={"eros": 0.6, "thanatos": 0.4}
+                )
+                results.append((thread_id, id(pm)))
+            except Exception as e:
+                errors.append((thread_id, str(e)))
+        
+        # Run concurrent writes
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(worker, i) for i in range(20)]
+            concurrent.futures.wait(futures)
+        
+        # Check all threads got the same instance
+        unique_instances = set(id_ for _, id_ in results)
+        print(f"Unique instances created: {len(unique_instances)}")
+        print(f"Errors encountered: {len(errors)}")
+        
+        if errors:
+            print("Errors:", errors)
+        if len(unique_instances) != 1:
+            print("FAIL: Multiple singleton instances detected!")
+            print("Instance IDs:", unique_instances)
+        else:
+            print("PASS: All threads accessed the same singleton instance")
+        
+        # Verify data was written (check history)
+        pm = PersistenceManager()
+        history = pm.get_decision_history(limit=25)
+        print(f"Decision history count: {len(history)}")
+        
+        if len(history) >= 20:
+            print("PASS: All 20 decisions were logged")
+        else:
+            print(f"WARNING: Expected 20 decisions, got {len(history)}")
+        
+        return len(errors) == 0 and len(unique_instances) == 1
+    
+    print("Running concurrent access test...")
+    success = test_concurrent_access()
+    print(f"\nTest {'PASSED' if success else 'FAILED'}")
