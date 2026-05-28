@@ -68,13 +68,14 @@ class GrowthInsight:
 
 class ReflectionAgent:
     
-    def __init__(self, log_dir: str = "logs"):
+    def __init__(self, log_dir: str = "logs", bias_window: int = 20):
         self.log_dir = log_dir
         self.decision_history: List[DecisionRecord] = []
         self.growth_patterns: Dict[str, List[GrowthPattern]] = {}
         self.max_history = 1000
         self.weight_history: List[WeightHistoryEntry] = []
         self.max_weight_history = 100
+        self.bias_window = bias_window
     
     def record_decision(self, record: DecisionRecord):
         self.decision_history.append(record)
@@ -132,9 +133,15 @@ class ReflectionAgent:
         Returns:
             Trend analysis with direction, stability, and pattern insights
         """
+        if window <= 0:
+            return {"status": "insufficient_data", "drive": drive, "reason": "invalid_window"}
+        
+        if not self.weight_history:
+            return {"status": "insufficient_data", "drive": drive, "reason": "no_history"}
+        
         recent = self.weight_history[-window:]
         if len(recent) < 2:
-            return {"status": "insufficient_data", "drive": drive}
+            return {"status": "insufficient_data", "drive": drive, "reason": "insufficient_entries"}
         
         weights = [entry.drive_weights.get(drive, 0.0) for entry in recent]
         
@@ -175,7 +182,10 @@ class ReflectionAgent:
             drives.update(entry.drive_weights.keys())
         
         for drive in drives:
-            trend = self.analyze_weight_trend(drive, window=min(10, len(self.weight_history)))
+            window = min(10, len(self.weight_history)) if self.weight_history else 0
+            if window < 2:
+                continue
+            trend = self.analyze_weight_trend(drive, window=window)
             if trend.get("status") == "insufficient_data":
                 continue
             
@@ -245,13 +255,19 @@ class ReflectionAgent:
                 mean1 = sum(weights1) / n
                 mean2 = sum(weights2) / n
                 
-                numerator = sum((w1 - mean1) * (w2 - mean2) for w1, w2 in zip(weights1, weights2))
-                denom1 = sum((w1 - mean1) ** 2 for w1 in weights1) ** 0.5
-                denom2 = sum((w2 - mean2) ** 2 for w2 in weights2) ** 0.5
+                variance1 = sum((w1 - mean1) ** 2 for w1 in weights1)
+                variance2 = sum((w2 - mean2) ** 2 for w2 in weights2)
                 
-                if denom1 > 0 and denom2 > 0:
-                    correlation = numerator / (denom1 * denom2)
-                    correlations[f"{d1}_{d2}"] = round(correlation, 3)
+                # Guard against division by zero (zero variance means all weights identical)
+                if variance1 == 0 or variance2 == 0:
+                    continue
+                
+                numerator = sum((w1 - mean1) * (w2 - mean2) for w1, w2 in zip(weights1, weights2))
+                denom1 = variance1 ** 0.5
+                denom2 = variance2 ** 0.5
+                
+                correlation = numerator / (denom1 * denom2)
+                correlations[f"{d1}_{d2}"] = round(correlation, 3)
         
         return correlations
     
@@ -312,9 +328,22 @@ class ReflectionAgent:
             "dominant_drive": max(drive_wins, key=drive_wins.get) if drive_wins else None
         }
     
-    def detect_bias(self) -> List[str]:
+    def detect_bias(self, window: Optional[int] = None) -> List[str]:
+        """Detect bias in recent decisions.
+        
+        Args:
+            window: Number of recent decisions to analyze (defaults to self.bias_window)
+            
+        Returns:
+            List of bias report strings
+        """
         bias_report = []
-        recent = self.decision_history[-20:]
+        window = window if window is not None else self.bias_window
+        
+        if window <= 0:
+            return bias_report
+        
+        recent = self.decision_history[-window:]
         if not recent:
             return bias_report
         
@@ -324,10 +353,11 @@ class ReflectionAgent:
             drive_wins[drive] = drive_wins.get(drive, 0) + 1
         
         for drive, count in drive_wins.items():
-            if count > 12:
-                bias_report.append(f"{drive} has won {count}/20 decisions (60%) - possible over-dominance")
+            threshold_60 = int(window * 0.6)
+            if count > threshold_60:
+                bias_report.append(f"{drive} has won {count}/{window} decisions ({count/window*100:.0f}%) - possible over-dominance")
             if count < 2:
-                bias_report.append(f"{drive} has only won {count}/20 decisions - possible suppression")
+                bias_report.append(f"{drive} has only won {count}/{window} decisions - possible suppression")
         
         return bias_report
     
