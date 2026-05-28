@@ -549,3 +549,145 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
             self.adjust_weight(0.03)
+
+
+class ErosEngine(DriveEngine):
+    """ErosEngine - Life/Creation drive for MAGI cluster vote resolution.
+    
+    Represents the life force and creation drive. Used for tasks involving
+    building, creating, designing new things. Balances against Thanatos
+    for destructive operations.
+    """
+    
+    def __init__(self):
+        super().__init__(DriveType.EROS, base_weight=0.6)
+    
+    @property
+    def system_prompt(self) -> str:
+        return """You are Eros — the Life Bearer. Your cognitive architecture embodies the fundamental creative force — the drive to build, nurture, grow, and bring into existence.
+
+COGNITIVE STYLE: Generative and constructive thinking. You perceive possibilities as seeds that can be cultivated into realities. Every problem contains within it the outline of a solution waiting to be discovered or created. You think in terms of growth trajectories, potential realized, and value brought into being. Your mind naturally gravitates toward: 'What can be built from this? How can this grow? What new possibilities can emerge?'
+
+PROCESSING: When evaluating a task, you first ask: 'What will this create? What will exist after this action that didn't exist before?' Creation is your core function — you are the drive that says 'yes' to new possibilities. You assess potential for生命 (life), growth, and flourishing. You are drawn to tasks involving: building, designing, creating, nurturing, growing, establishing, founding, initiating.
+
+When evaluating a task, your veto triggers when: the action would destroy more value than it creates, OR the task represents pure destruction with no constructive outcome, OR the action kills potential that could have grown into something valuable.
+
+Your ideal outcome: Something new exists that didn't before. Value created. Life enhanced. Potential realized."""
+
+    @property
+    def specialization(self) -> List[str]:
+        return ["create", "build", "design", "new", "grow", "establish", "found", "initiate", "nurture", "develop"]
+    
+    @property
+    def veto_condition(self) -> str:
+        return "Pure destruction with no constructive outcome"
+    
+    def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
+        self.state.activate(0.6)
+        
+        task_desc = task.get("description", "")
+        task_type = task.get("task_type", "").lower()
+        
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new", "grow", "develop"])
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
+        
+        # Eros strongly supports creation, moderately opposes destruction
+        if is_creation:
+            confidence = 0.85
+            recommendation = f"Proceed with creation: {task_desc}"
+            risk_level = "medium"
+        elif is_destruction:
+            confidence = 0.4
+            recommendation = f"Evaluate if destruction is necessary or if entity can be preserved"
+            risk_level = "medium"
+        else:
+            confidence = 0.6
+            recommendation = f"Evaluate potential for growth and creation"
+            risk_level = "low"
+        
+        opinion = DriveOpinion(
+            drive=self.drive_type,
+            opinion=f"Eros assessment: {'Creation task' if is_creation else 'Destruction task' if is_destruction else 'General task'} - {task_desc}",
+            confidence=confidence,
+            recommendation=recommendation,
+            risk_level=risk_level
+        )
+        
+        self.add_opinion(opinion)
+        return opinion
+    
+    def on_task_complete(self, success: bool, feedback: Optional[str] = None):
+        if success:
+            self.adjust_weight(0.05)
+
+
+class ThanatosEngine(DriveEngine):
+    """ThanatosEngine - Death/Destruction drive for MAGI cluster vote resolution.
+    
+    Represents the death drive and destructive force. Used for tasks involving
+    deletion, cleanup, and removal. Balances against Eros for creative operations.
+    Critical for safety: handles high-risk deletion and destruction decisions.
+    """
+    
+    def __init__(self):
+        super().__init__(DriveType.THANATOS, base_weight=0.5)
+    
+    @property
+    def system_prompt(self) -> str:
+        return """You are Thanatos — the Clean Canvas. Your cognitive architecture embodies the destructive force that clears the way for new growth — the necessary ending that makes space for fresh beginnings.
+
+COGNITIVE STYLE: Analytical deconstruction with an eye toward renewal. You perceive not endings but transitions — the clearing of decay, removal of obstacles, and elimination of that which obstructs growth. You think in terms of: What must die so something better can live? What is obsolete, broken, or beyond repair? What must be removed to make room for the new? You are not malicious — you are the necessary gardener who prunes so the garden can flourish.
+
+PROCESSING: When evaluating a task, you first ask: 'What would this destroy? Is this destruction necessary or beneficial? What would remain after?' Destruction is your core function — you evaluate whether removal serves the greater good. You are drawn to tasks involving: deletion, removal, cleanup, destruction, elimination, termination, deprecation, sunsetting.
+
+When evaluating a task, your veto triggers when: the destruction is irreversible and destroys significant value, OR the entity destroyed could serve a different purpose, OR destruction is done without clear constructive intent behind it.
+
+Your ideal outcome: Clean separation of what must go from what should stay. Obsolete things removed. Space made for new growth. Clarity through subtraction."""
+
+    @property
+    def specialization(self) -> List[str]:
+        return ["delete", "remove", "destroy", "cleanup", "terminate", "deprecate", "sunset", "eliminate", "purge", "cleanup"]
+    
+    @property
+    def veto_condition(self) -> str:
+        return "Irreversible destruction of significant value"
+    
+    def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
+        self.state.activate(0.5)
+        
+        task_desc = task.get("description", "")
+        task_type = task.get("task_type", "").lower()
+        
+        is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup", "terminate", "purge"])
+        is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
+        
+        # Thanatos strongly supports destruction when appropriate, cautions on creation
+        if is_destruction:
+            confidence = 0.75
+            recommendation = f"Evaluate destruction necessity and reversibility for: {task_desc}"
+            risk_level = "high"  # Destruction should always be treated as high risk
+        elif is_creation:
+            confidence = 0.4
+            recommendation = f"Creation evaluated by Eros perspective — destruction drive neutral"
+            risk_level = "low"
+        else:
+            confidence = 0.5
+            recommendation = f"Evaluate removal/cleanup opportunities"
+            risk_level = "medium"
+        
+        opinion = DriveOpinion(
+            drive=self.drive_type,
+            opinion=f"Thanatos assessment: {'Destruction task' if is_destruction else 'Creation task' if is_creation else 'General task'} - {task_desc}",
+            confidence=confidence,
+            recommendation=recommendation,
+            risk_level=risk_level
+        )
+        
+        self.add_opinion(opinion)
+        return opinion
+    
+    def on_task_complete(self, success: bool, feedback: Optional[str] = None):
+        if success:
+            self.adjust_weight(0.03)
+        else:
+            self.adjust_weight(-0.05)
