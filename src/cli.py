@@ -6,7 +6,8 @@ from .core.drive_engine import DriveEngineRegistry
 from .core.ego_core import EGOCore, TaskInput
 from .engines.seven_sins import (
     GluttonyEngine, LustEngine, GreedEngine, SlothEngine,
-    PrideEngine, WrathEngine, EnvyEngine
+    PrideEngine, WrathEngine, EnvyEngine,
+    ErosEngine, ThanatosEngine
 )
 from .memory.reflection import ReflectionAgent, DecisionRecord
 from .tools.terminal import TerminalExecutor, TerminalType
@@ -27,6 +28,8 @@ class SevenSinsCLI:
         registry.register(PrideEngine())
         registry.register(WrathEngine())
         registry.register(EnvyEngine())
+        registry.register(ErosEngine())
+        registry.register(ThanatosEngine())
         return EGOCore(registry)
     
     def run_task(self, description: str, task_type: str, context: Optional[dict] = None):
