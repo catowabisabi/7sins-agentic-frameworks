@@ -6,6 +6,7 @@ Abstract base class for LLM integrations (MiniMax, OpenAI, Anthropic)
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
+import threading
 
 
 @dataclass
@@ -91,18 +92,50 @@ class LLMProvider(ABC):
 
 
 class LLMProviderRegistry:
-    """Registry for managing LLM provider instances"""
+    """Registry for managing LLM provider instances - thread-safe implementation"""
     
-    _providers: Dict[str, LLMProvider] = {}
+    _instances: Dict[str, 'LLMProviderRegistry'] = {}
+    _lock = threading.Lock()
+    
+    def __init__(self):
+        self._providers: Dict[str, LLMProvider] = {}
+        self._instance_lock = threading.Lock()
     
     @classmethod
+    def get_instance(cls, name: str = "default") -> 'LLMProviderRegistry':
+        """Get or create a named registry instance (thread-safe singleton per name)"""
+        with cls._lock:
+            if name not in cls._instances:
+                cls._instances[name] = cls()
+            return cls._instances[name]
+    
+    def register(self, name: str, provider: LLMProvider):
+        """Register a provider (thread-safe)"""
+        with self._instance_lock:
+            self._providers[name] = provider
+    
+    def get(self, name: str) -> Optional[LLMProvider]:
+        """Get a provider by name (thread-safe)"""
+        with self._instance_lock:
+            return self._providers.get(name)
+    
+    def list_providers(self) -> List[str]:
+        """List all registered provider names (thread-safe)"""
+        with self._instance_lock:
+            return list(self._providers.keys())
+    
+    # Backward compatibility: class methods that delegate to default instance
+    @classmethod
     def register(cls, name: str, provider: LLMProvider):
-        cls._providers[name] = provider
+        """Register a provider (class method, thread-safe)"""
+        cls.get_instance().register(name, provider)
     
     @classmethod
     def get(cls, name: str) -> Optional[LLMProvider]:
-        return cls._providers.get(name)
+        """Get a provider by name (class method, thread-safe)"""
+        return cls.get_instance().get(name)
     
     @classmethod
     def list_providers(cls) -> List[str]:
-        return list(cls._providers.keys())
+        """List all registered provider names (class method, thread-safe)"""
+        return cls.get_instance().list_providers()
