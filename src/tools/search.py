@@ -9,6 +9,11 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
 
+class SearchUnavailableError(Exception):
+    """Raised when search tool is unavailable (e.g., missing API key)"""
+    pass
+
+
 @dataclass
 class SearchResult:
     """Represents a single search result"""
@@ -42,9 +47,14 @@ class BraveSearchTool:
 
         Returns:
             List of search result dictionaries with title, url, snippet
+
+        Raises:
+            SearchUnavailableError: If API key is not configured
         """
         if not self._available:
-            return self._empty_results()
+            raise SearchUnavailableError(
+                "Brave Search API key not configured. Set BRAVE_SEARCH_API_KEY environment variable."
+            )
 
         try:
             import urllib.request
@@ -68,8 +78,10 @@ class BraveSearchTool:
                 data = json.loads(response.read().decode("utf-8"))
                 return self._parse_results(data)
 
+        except SearchUnavailableError:
+            raise
         except Exception:
-            return self._empty_results()
+            raise SearchUnavailableError(f"Search failed for query: {query}")
 
     def _parse_results(self, data: dict) -> List[Dict[str, Any]]:
         """Parse Brave Search API response into normalized format"""
@@ -85,10 +97,6 @@ class BraveSearchTool:
             })
 
         return results
-
-    def _empty_results(self) -> List[Dict[str, Any]]:
-        """Return empty search results when unavailable or on error"""
-        return []
 
 
 # Global search tool instance
@@ -113,6 +121,9 @@ def search_web(query: str, count: int = 10) -> List[Dict[str, Any]]:
 
     Returns:
         List of search result dictionaries
+
+    Raises:
+        SearchUnavailableError: If search tool is unavailable
     """
     tool = get_search_tool()
     return tool.search(query, count)
