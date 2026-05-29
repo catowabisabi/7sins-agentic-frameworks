@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 import time
+import re
 
 from src.memory.persistence import get_persistence_manager
 
@@ -202,18 +203,52 @@ class DriveEngine(ABC):
         """
         Calculate the veto power for this drive engine.
         
-        Returns 1.0 (100% veto) if:
-        - The engine's veto_condition is satisfied (high risk opinion)
-        - Otherwise returns weighted score based on state
+        Evaluates the engine's veto_condition against recent opinions to determine
+        if the veto should fire. Returns 1.0 (100% veto) if the veto_condition
+        is satisfied, otherwise returns a weighted score based on state.
         """
-        # Safety veto: check if recent high-risk opinion exists
-        recent_opinions = self.get_recent_opinions(limit=1)
+        # Evaluate veto_condition against recent opinions
+        recent_opinions = self.get_recent_opinions(limit=3)
         if recent_opinions:
             latest_opinion = recent_opinions[0]
+            
+            # Extract key terms from veto_condition for semantic matching
+            veto_keywords = self._extract_veto_keywords(self.veto_condition)
+            
+            # Check if opinion matches the veto condition
+            if self._veto_condition_satisfied(latest_opinion, veto_keywords):
+                return 1.0
+            
+            # High risk opinion also triggers full veto as fallback
             if latest_opinion.risk_level == "high":
                 return 1.0
         
+        # Base veto power on drive weight and whether veto has been used
         return self.state.weight * (1.0 if self.state.veto_used else 0.5)
+    
+    def _extract_veto_keywords(self, veto_condition: str) -> List[str]:
+        """Extract meaningful keywords from veto_condition string."""
+        # Remove common filler words and extract significant terms
+        filler = {'the', 'a', 'an', 'is', 'are', 'when', 'or', 'and', 'of', 'to', 'that', 'would', 'be'}
+        words = re.findall(r'[a-z]+', veto_condition.lower())
+        return [w for w in words if w not in filler and len(w) > 2]
+    
+    def _veto_condition_satisfied(self, opinion: 'DriveOpinion', veto_keywords: List[str]) -> bool:
+        """Check if opinion text matches the veto condition keywords."""
+        if not veto_keywords:
+            return False
+        
+        # Combine opinion text for matching
+        text_to_check = f"{opinion.opinion} {opinion.recommendation}".lower()
+        
+        # Count how many veto keywords appear in the opinion
+        matches = sum(1 for kw in veto_keywords if kw in text_to_check)
+        
+        # Veto condition is satisfied if >= 50% of keywords are matched
+        # or if any single highly specific keyword matches
+        if len(veto_keywords) == 1:
+            return matches >= 1
+        return matches >= len(veto_keywords) // 2
     
     def reset_for_new_task(self):
         self.state.reset()
