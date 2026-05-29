@@ -65,6 +65,7 @@ class MiniMaxProvider(LLMProvider):
         payload = {
             "model": self.model,
             "messages": messages,
+            "group_id": self.group_id,
             "temperature": temperature,
             "max_tokens": max_tokens,
             "top_p": top_p,
@@ -85,7 +86,7 @@ class MiniMaxProvider(LLMProvider):
                 return self._parse_response(result)
                 
         except urllib.error.HTTPError as e:
-            error_body = e.read().decode("utf-8") if e.fp else ""
+            error_body = e.read().decode("utf-8") if e.fp is not None else ""
             raise Exception(f"MiniMax API error {e.code}: {error_body}")
         except urllib.error.URLError as e:
             raise Exception(f"MiniMax connection error: {e.reason}")
