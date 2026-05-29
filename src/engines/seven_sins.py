@@ -690,36 +690,49 @@ Your ideal outcome: Something new exists that didn't before. Value created. Life
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
         
-        task_desc = task.get("description", "")
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
+        
         task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
         
         is_creation = any(kw in task_type for kw in ["create", "build", "design", "new", "grow", "develop"])
         is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup"])
         
-        # Eros strongly supports creation, moderately opposes destruction
-        if is_creation:
-            confidence = 0.85
-            recommendation = f"Proceed with creation: {task_desc}"
-            risk_level = "medium"
-        elif is_destruction:
-            confidence = 0.4
-            recommendation = f"Evaluate if destruction is necessary or if entity can be preserved"
-            risk_level = "medium"
-        else:
-            confidence = 0.6
-            recommendation = f"Evaluate potential for growth and creation"
-            risk_level = "low"
+        drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
         
-        opinion = DriveOpinion(
-            drive=self.drive_type,
-            opinion=f"Eros assessment: {'Creation task' if is_creation else 'Destruction task' if is_destruction else 'General task'} - {task_desc}",
-            confidence=confidence,
-            recommendation=recommendation,
-            risk_level=risk_level
-        )
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Eros", self.specialization)
         
-        self.add_opinion(opinion)
-        return opinion
+        try:
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            # Fallback to heuristic response on error after retries exhausted
+            if is_creation:
+                confidence = 0.85
+                recommendation = f"Proceed with creation: {task.get('description', 'No description')}"
+                risk_level = "medium"
+            elif is_destruction:
+                confidence = 0.4
+                recommendation = f"Evaluate if destruction is necessary or if entity can be preserved"
+                risk_level = "medium"
+            else:
+                confidence = 0.6
+                recommendation = f"Evaluate potential for growth and creation"
+                risk_level = "low"
+            
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Eros assessment: {'Creation task' if is_creation else 'Destruction task' if is_destruction else 'General task'} - {task.get('description', '')}",
+                confidence=confidence,
+                recommendation=recommendation,
+                risk_level=risk_level
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
@@ -760,36 +773,49 @@ Your ideal outcome: Clean separation of what must go from what should stay. Obso
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.5)
         
-        task_desc = task.get("description", "")
+        # Adjust Eros/Thanatos weights based on task type
+        self.execute(task.get("task_type", ""))
+        
         task_type = task.get("task_type", "").lower()
+        eros_weight = self.state.eros_weight
+        thanatos_weight = self.state.thanatos_weight
         
         is_destruction = any(kw in task_type for kw in ["delete", "remove", "destroy", "cleanup", "terminate", "purge"])
         is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
         
-        # Thanatos strongly supports destruction when appropriate, cautions on creation
-        if is_destruction:
-            confidence = 0.75
-            recommendation = f"Evaluate destruction necessity and reversibility for: {task_desc}"
-            risk_level = "high"  # Destruction should always be treated as high risk
-        elif is_creation:
-            confidence = 0.4
-            recommendation = f"Creation evaluated by Eros perspective — destruction drive neutral"
-            risk_level = "low"
-        else:
-            confidence = 0.5
-            recommendation = f"Evaluate removal/cleanup opportunities"
-            risk_level = "medium"
+        drive_weight = thanatos_weight if is_destruction else (eros_weight if is_creation else 0.5)
         
-        opinion = DriveOpinion(
-            drive=self.drive_type,
-            opinion=f"Thanatos assessment: {'Destruction task' if is_destruction else 'Creation task' if is_creation else 'General task'} - {task_desc}",
-            confidence=confidence,
-            recommendation=recommendation,
-            risk_level=risk_level
-        )
+        provider = _get_llm_provider()
+        prompt = _build_task_prompt(task, context, "Thanatos", self.specialization)
         
-        self.add_opinion(opinion)
-        return opinion
+        try:
+            response = _call_llm_with_retry(provider, prompt=prompt, system_prompt=self.system_prompt)
+            opinion = _parse_llm_opinion(response, self.drive_type)
+            opinion.confidence = opinion.confidence * drive_weight
+            self.add_opinion(opinion)
+            return opinion
+        except Exception as e:
+            # Fallback to heuristic response on error after retries exhausted
+            if is_destruction:
+                confidence = 0.75
+                recommendation = f"Evaluate destruction necessity and reversibility for: {task.get('description', 'No description')}"
+                risk_level = "high"  # Destruction should always be treated as high risk
+            elif is_creation:
+                confidence = 0.4
+                recommendation = f"Creation evaluated by Eros perspective — destruction drive neutral"
+                risk_level = "low"
+            else:
+                confidence = 0.5
+                recommendation = f"Evaluate removal/cleanup opportunities"
+                risk_level = "medium"
+            
+            return DriveOpinion(
+                drive=self.drive_type,
+                opinion=f"Thanatos assessment: {'Destruction task' if is_destruction else 'Creation task' if is_creation else 'General task'} - {task.get('description', '')}",
+                confidence=confidence,
+                recommendation=recommendation,
+                risk_level=risk_level
+            )
     
     def on_task_complete(self, success: bool, feedback: Optional[str] = None):
         if success:
