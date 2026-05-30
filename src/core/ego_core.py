@@ -12,6 +12,7 @@ import os
 
 from .drive_engine import DriveEngine, DriveOpinion, DriveType, DriveEngineRegistry
 from src.memory.persistence import get_persistence_manager
+from src.memory.reflection import ReflectionAgent, DecisionRecord
 
 
 class MAGICluster(Enum):
@@ -150,6 +151,7 @@ class EGOCore:
         self.max_debate_rounds = 3
         self.confidence_threshold = 0.6
         self.audit_logger = AuditLogger()
+        self.reflection_agent = ReflectionAgent()
     
     def process_task(self, task: TaskInput) -> DecisionResult:
         self.state.current_task = task
@@ -628,6 +630,18 @@ class EGOCore:
             engine = self.registry.get(winning_drive)
             if engine:
                 engine.on_task_complete(success, feedback)
+            
+            # Wire decision record into ReflectionAgent for self-growth
+            decision_record = DecisionRecord(
+                task_id=str(self.state.last_decision_time),
+                task_description=self.state.current_task.description if self.state.current_task else "",
+                winning_drive=winning_drive.value,
+                drive_weights=self.registry.get_weights(),
+                outcome="success" if success else "failure",
+                outcome_confidence=self.state.decision.confidence,
+                timestamp=self.state.last_decision_time
+            )
+            self.reflection_agent.record_decision(decision_record)
     
     def _log_decision_to_persistence(self, decision: DecisionResult, task: TaskInput):
         """Log decision to SQLite persistence layer"""
