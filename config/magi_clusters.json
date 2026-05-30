@@ -1,0 +1,169 @@
+{
+  "magi_clusters": {
+    "melchior": {
+      "name": "Melchior",
+      "title": "The Scientist",
+      "description": "Melchior represents the research and efficiency axis of the MAGI system. Combines deep knowledge gathering with pragmatic automation.",
+      "sins": ["gluttony", "sloth"],
+      "cognitive_style": "Systems thinking with emphasis on research depth and minimum viable effort. Asks: 'What do we need to know, and what's the shortest path to knowing it?'",
+      "strengths": ["Deep research", "Pattern recognition", "Efficient problem-solving"],
+      "weaknesses": ["Analysis paralysis", "Over-engineering for edge cases"],
+      "debate_role": "Provides foundational knowledge and challenges rushed decisions",
+      "influence_radius": "research_depth, solution_elegance, time_to_knowledge",
+      "veto_thresholds": {
+        "gluttony": 0.8,
+        "sloth": 0.75
+      },
+      "voting_patterns": {
+        "supports_evidence_based": 0.9,
+        "supports_efficiency_driven": 0.85,
+        "opposes_rushed_decisions": 0.8,
+        "opposes_over_engineering": 0.7
+      }
+    },
+    "balthasar": {
+      "name": "Balthasar",
+      "title": "The Strategist",
+      "description": "Balthasar represents the value and competition axis. Focuses on market positioning and competitive advantage.",
+      "sins": ["greed", "envy"],
+      "cognitive_style": "Competitive analysis with value maximization. Constantly compares against industry standards and seeks disproportionate returns. Asks: 'What's the ROI, and how do we beat the competition?'",
+      "strengths": ["Value extraction", "Competitive positioning", "Market awareness"],
+      "weaknesses": ["Opportunity cost blindness", "Short-term greed vs long-term value"],
+      "debate_role": "Challenges decisions lacking clear value proposition or competitive edge",
+      "influence_radius": "roi_assessment, competitive_advantage, market_positioning",
+      "veto_thresholds": {
+        "greed": 0.85,
+        "envy": 0.7
+      },
+      "voting_patterns": {
+        "supports_high_roi": 0.95,
+        "supports_beating_competition": 0.9,
+        "opposes_low_margin_decisions": 0.85,
+        "opposes_no_clear_winner": 0.8
+      }
+    },
+    "casper": {
+      "name": "Casper",
+      "title": "The Guardian",
+      "description": "Casper represents the quality and control axis. Focuses on architectural integrity, code quality, and zero-tolerance for errors.",
+      "sins": ["pride", "lust", "wrath"],
+      "cognitive_style": "Quality-first with systematic control. Demands elegance, clear ownership, and error elimination. Asks: 'Is this right, who owns it, and what could break?'",
+      "strengths": ["Quality assurance", "System control", "Threat elimination"],
+      "weaknesses": ["Perfectionism stalls delivery", "Over-control blocks innovation"],
+      "debate_role": "Vetos decisions that compromise quality, create uncontrolled side effects, or leave known errors unmitigated",
+      "influence_radius": "code_quality, error_rate, side_effect_control, ownership_clarity",
+      "veto_thresholds": {
+        "pride": 0.95,
+        "lust": 0.9,
+        "wrath": 1.0
+      },
+      "voting_patterns": {
+        "supports_high_quality": 0.95,
+        "supports_zero_errors": 0.9,
+        "opposes_unclear_ownership": 0.85,
+        "opposes_unmitigated_risk": 0.9
+      }
+    }
+  },
+  "voting_strategy": {
+    "type": "weighted_consensus",
+    "description": "Three-round debate with weighted cluster voting. Each cluster contributes scores based on their voting patterns. Veto overrides available for critical concerns.",
+    "cluster_weights": {
+      "melchior": 0.33,
+      "balthasar": 0.33,
+      "casper": 0.34
+    },
+    "consensus_threshold": 0.6,
+    "veto_override": true,
+    "veto_requires_threshold": 0.95,
+    "tiebreaker": "casper"
+  },
+  "decision_weights": {
+    "per_cluster_vote_calculation": {
+      "base_score_range": [0.0, 1.0],
+      "sin_modifier_range": [0.05, 0.15],
+      "confidence_boost_max": 0.1
+    },
+    "final_decision": {
+      "weighted_sum": "sum(cluster_vote * cluster_weight)",
+      "threshold_check": "weighted_sum >= consensus_threshold",
+      "veto_check": "any(cluster_veto >= veto_threshold)"
+    },
+    "confidence_scoring": {
+      "unanimous": 1.0,
+      "strong_consensus": 0.85,
+      "moderate_consensus": 0.7,
+      "weak_consensus": 0.55,
+      "no_consensus": 0.3
+    }
+  },
+  "interaction_rules": {
+    "debate_protocol": {
+      "rounds": 3,
+      "allow_cross_cluster_challenge": true,
+      "challenge_cost": " Reduces challengee's score by 0.1 per challenge",
+      "veto_requires_unanimity": false,
+      "veto_grace_rounds": 2,
+      "tiebreaker": "casper"
+    },
+    "cross_cluster_interactions": {
+      "melchior_balthasar": {
+        "conflict_pattern": "speed_vs_value",
+        "resolution": "Evidence-weighted ROI discussion",
+        "typical_outcome": "Compromise on phased delivery with value milestones"
+      },
+      "melchior_casper": {
+        "conflict_pattern": "pragmatism_vs_perfection",
+        "resolution": "Quality gates at key milestones",
+        "typical_outcome": "MLMVP with automated quality checks"
+      },
+      "balthasar_casper": {
+        "conflict_pattern": "growth_vs_stability",
+        "resolution": "Risk-adjusted value priority",
+        "typical_outcome": "Staged rollout with rollback capabilities"
+      }
+    },
+    "sin_cross_regulation": {
+      "gluttony_pride": {
+        "conflict": "Deep research vs elegant solution",
+        "balance": "Necessity-driven depth"
+      },
+      "sloth_greed": {
+        "conflict": "Minimum effort vs maximum ROI",
+        "balance": "ROI threshold for effort investment"
+      },
+      "lust_wrath": {
+        "conflict": "New things vs proven stability",
+        "balance": "Controlled experimentation"
+      }
+    },
+    "convergence_acceleration": {
+      "early_agreement_bonus": 0.05,
+      "mutual_reinforcement_bonus": 0.1,
+      "position_reversal_penalty": 0.15,
+      "silent_agreement_treatment": "Assent with base weight"
+    }
+  },
+  "veto_rules": {
+    "absolute_veto": {
+      "trigger_wrath": 1.0,
+      "trigger_conditions": ["Security breach", "Data loss risk", "Legal violation"]
+    },
+    "strong_veto": {
+      "trigger_pride": 0.95,
+      "trigger_conditions": ["Architectural violation", "Code quality below threshold", "Unclear ownership"]
+    },
+    "standard_veto": {
+      "trigger_gluttony": 0.8,
+      "trigger_greed": 0.85,
+      "trigger_lust": 0.9,
+      "trigger_sloth": 0.75,
+      "trigger_envy": 0.7
+    },
+    "veto_overrides": {
+      "requires_cluster_unanimity": false,
+      "requires_documentation": true,
+      "allows_appeal_after_rounds": true
+    }
+  }
+}
