@@ -44,7 +44,7 @@ class SevenSinsCLI:
         record = DecisionRecord(
             task_id=f"task_{id(result)}",
             task_description=description,
-            winning_drive=str(result.selected_drives[0][0]) if result.selected_drives else "unknown",
+            winning_drive=str(result.selected_drives[0][0]) if result.selected_drives and result.selected_drives[0] else "unknown",
             drive_weights={str(d): w for d, w in result.selected_drives},
             outcome="success",
             outcome_confidence=result.confidence,
@@ -56,7 +56,7 @@ class SevenSinsCLI:
         print(f"Task: {description}")
         print(f"Recommendation: {result.recommendation}")
         print(f"Confidence: {result.confidence:.2f}")
-        print(f"Winner: {result.selected_drives[0] if result.selected_drives else 'None'}")
+        print(f"Winner: {result.selected_drives[0] if result.selected_drives and result.selected_drives[0] else 'None'}")
         
         return result
     
