@@ -113,23 +113,59 @@ class WSLIntegration:
 
 class SafeExecutor:
     
+    BLOCKED_COMMANDS = frozenset([
+        "rm", "del", "format", "shutdown", "reboot", "mkfs", "dd",
+    "fdisk", "parted", "sfdisk"
+    ])
+    
     def __init__(self, executor: TerminalExecutor):
         self.executor = executor
-        self.safe_commands = ["git", "ls", "cat", "head", "tail", "grep", "find"]
-        self.dangerous_commands = ["rm", "del", "format", "shutdown", "reboot"]
+    
+    def _tokenize(self, command: str) -> List[str]:
+        if not command:
+            return []
+        return command.strip().split()
+    
+    def _check_dangerous_flags(self, tokens: List[str]) -> bool:
+        for token in tokens:
+            if token in ("-rf", "-rF", "-R", "-f", "--force"):
+                return True
+            if token.startswith("/") and token.lower() in ("/s", "/f", "/q", "/force"):
+                return True
+        i = 0
+        while i < len(tokens):
+            t = tokens[i]
+            if t in ("-r", "-R"):
+                if i + 1 < len(tokens) and tokens[i + 1] in ("-f", "--force"):
+                    return True
+            elif t == "-f":
+                if i > 0 and tokens[i - 1] in ("-r", "-R"):
+                    return True
+            i += 1
+        return False
     
     def is_safe(self, command: str) -> bool:
-        cmd_lower = command.lower().split()[0] if command else ""
-        if cmd_lower in self.dangerous_commands:
+        tokens = self._tokenize(command)
+        if not tokens:
+            return True
+        
+        base_cmd = tokens[0].lower()
+        if base_cmd in self.BLOCKED_COMMANDS:
             return False
+        
+        if self._check_dangerous_flags(tokens):
+            return False
+        
         return True
     
     def execute_safe(self, command: str, timeout: int = 30) -> ExecutionResult:
         if not self.is_safe(command):
+            tokens = self._tokenize(command)
+            base = tokens[0] if tokens else "unknown"
             return ExecutionResult(
                 success=False,
                 stdout="",
-                stderr=f"Command '{command.split()[0]}' is blocked for safety",
+                stderr=f"Command '{base}' is blocked for safety",
                 exit_code=-1,
                 terminal_type=self.executor.terminal_type,
                 command=command
