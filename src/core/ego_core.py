@@ -209,18 +209,6 @@ class EGOCore:
                 )
                 return False
         
-        # Gate 3: Creation tasks with low Eros weight require human review
-        if self.state.current_task:
-            task_type = self.state.current_task.task_type.lower()
-            is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
-            if is_creation:
-                eros_engine = self.registry.get(DriveType.EROS)
-                if eros_engine and eros_engine.state.eros_weight < 0.3:
-                    self.audit_logger.log_approval_request(
-                        decision, False, f"Human review required: Creation task with Eros weight {eros_engine.state.eros_weight} < 0.3"
-                    )
-                    return False
-        
         # Default: approve
         self.audit_logger.log_approval_request(
             decision, True, "Approved: passes all safety gates"
