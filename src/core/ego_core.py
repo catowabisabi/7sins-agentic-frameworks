@@ -18,6 +18,7 @@ class MAGICluster(Enum):
     """MAGI cluster definitions for cluster-based voting"""
     MELCHIOR = "melchior"      # Scientific/rational: Gluttony + Sloth
     BALTHASAR = "balthasar"   # Value/market: Greed + Envy
+    MELCHIOR_EROS = "melchior_eros"  # Life/death: Eros + Thanatos
     CASPER = "casper"          # Quality/control: Pride + Lust + Wrath
 
 
@@ -26,6 +27,7 @@ MAGI_CLUSTERS = {
     MAGICluster.MELCHIOR: [DriveType.GLUTTONY, DriveType.SLOTH],
     MAGICluster.BALTHASAR: [DriveType.GREED, DriveType.ENVY],
     MAGICluster.CASPER: [DriveType.PRIDE, DriveType.LUST, DriveType.WRATH],
+    MAGICluster.MELCHIOR_EROS: [DriveType.EROS, DriveType.THANATOS],
 }
 
 
