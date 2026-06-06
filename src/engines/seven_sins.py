@@ -448,7 +448,7 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
 
     @property
     def specialization(self) -> List[str]:
-        return ["automation", "efficiency", "repeat", "manual", "refactor", "script", "tool"]
+        return ["automation", "efficiency", "repeatable", "manual", "refactor", "script", "tool"]
     
     @property
     def veto_condition(self) -> str:
