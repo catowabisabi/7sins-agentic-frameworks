@@ -1,41 +1,39 @@
-# 7Sins Manager — Latest Summary
-Generated: 2026-06-05 23:18
+# 7Sins Manager State Summary
 
-## Current State
-- **Commit**: 13b8a6f (HEAD = origin/main)
-- **Last full audit**: 2026-06-05 22:40
-- **Total todos**: 23
-- **Done**: 23 | **Pending**: 0 | **Blocked**: 0
+## Last Updated
+2026-06-05 20:34:28
 
-## This Cycle (2026-06-05 23:17)
+## Current Commit
+`0eb59439` - 0eb5943 HO: docs: update latest_summary.md after QA #23
 
-### QA #23 — Passed ✅
-- **Branch**: auto/todo-23
-- **Worker commit**: 9b84a02
-- **Merge commit**: 13b8a6f (origin/main)
-- **Fix**: cli.py: Guard against IndexError when selected_drives is empty (lines 47, 59)
-- **Verification**: py_compile ✓, pytest 27/27 ✓, code review ✓
-- **Status**: Merged to main and pushed
+## Project Status
+| Metric | Value |
+|--------|-------|
+| Total todos | 21 |
+| Done | 18 |
+| Active | 0 |
+| Tests | 123 passing |
 
-## Code Status (All P0/P1 Resolved)
-| Component | Status |
-|-----------|--------|
-| ego_core.py | ✅ Multi-turn debate + MAGI voting |
-| seven_sins.py | ✅ Retry logic + exponential backoff |
-| persistence.py | ✅ Thread-safe singleton + relative path |
-| drive_engine.py | ✅ get_veto_power() with actual veto_condition |
-| llm_provider.py | ✅ Thread-safe with instance-level storage |
-| minimax_provider.py | ✅ group_id in payload + safe error handling |
-| search.py | ✅ SearchUnavailableError on missing API key |
-| cli.py | ✅ ErosEngine/ThanatosEngine registered + timestamp fixed + empty selected_drives guard |
-| terminal.py | ✅ SafeExecutor validates ALL tokens |
-| tests/test_ego_core.py | ✅ 41 tests, 100% coverage |
-| tests/test_seven_sins.py | ✅ 44 tests |
-| **All tests** | ✅ **123+ tests passing** |
+## Code Status (Verified 2026-06-05)
+| Component | Status | Notes |
+|-----------|--------|-------|
+| seven_sins.py | ✅ | retry logic + exponential backoff |
+| ego_core.py | ✅ | multi-turn debate + MAGI voting |
+| llm_provider.py | ✅ | thread-safe registry |
+| drive_engine.py | ✅ | get_veto_power() evaluates actual condition |
+| cli.py | ✅ | ErosEngine/ThanatosEngine registered |
+| minimax_provider.py | ✅ | group_id in payload + safe error handling |
+| search.py | ✅ | SearchUnavailableError graceful handling |
+| tests/test_ego_core.py | ✅ | 41 tests, 100% coverage |
+| tests/test_seven_sins.py | ✅ | 44 tests |
 
 ## All Todos Complete
-All 23 todos (P0-P2) have been resolved. The 7Sins Freud psychological model is fully implemented:
+All 21 todos (P0-P2) have been resolved. The 7Sins Freud psychological model is fully implemented:
 - Id (7 Sins engine) ✅
 - Ego (EGO-CORE with MAGI voting) ✅
 - Superego (Safety/Veto/Human Override) ✅
 - Eros/Thanatos (Creation/Destruction drives) ✅
+
+## Recent Activity
+- 2026-06-05 20:33: Full audit complete. Stale todos #19, #20, #21 marked done (already merged to main).
+- 123 tests passing, all source files compile clean.
