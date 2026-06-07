@@ -16,8 +16,8 @@ from .tools.terminal import TerminalExecutor, TerminalType
 class SevenSinsCLI:
     
     def __init__(self):
-        self.ego_core = self._create_system()
         self.reflector = ReflectionAgent()
+        self.ego_core = self._create_system()
     
     def _create_system(self) -> EGOCore:
         registry = DriveEngineRegistry()
@@ -30,7 +30,7 @@ class SevenSinsCLI:
         registry.register(EnvyEngine())
         registry.register(ErosEngine())
         registry.register(ThanatosEngine())
-        return EGOCore(registry)
+        return EGOCore(registry, self.reflector)
     
     def run_task(self, description: str, task_type: str, context: Optional[dict] = None):
         task = TaskInput(
@@ -40,17 +40,6 @@ class SevenSinsCLI:
         )
         
         result = self.ego_core.process_task(task)
-        
-        record = DecisionRecord(
-            task_id=f"task_{id(result)}",
-            task_description=description,
-            winning_drive=str(result.selected_drives[0][0]) if result.selected_drives and result.selected_drives[0] else "unknown",
-            drive_weights={str(d): w for d, w in result.selected_drives},
-            outcome="success",
-            outcome_confidence=result.confidence,
-            timestamp=time.time()
-        )
-        self.reflector.record_decision(record)
         
         print(f"\n=== 7Sins Decision ===")
         print(f"Task: {description}")
