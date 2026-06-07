@@ -147,13 +147,13 @@ class EGOState:
 
 class EGOCore:
     
-    def __init__(self, registry: DriveEngineRegistry):
+    def __init__(self, registry: DriveEngineRegistry, reflection_agent: Optional[ReflectionAgent] = None):
         self.registry = registry
         self.state = EGOState()
         self.max_debate_rounds = 3
         self.confidence_threshold = 0.6
         self.audit_logger = AuditLogger()
-        self.reflection_agent = ReflectionAgent()
+        self.reflection_agent = reflection_agent if reflection_agent is not None else ReflectionAgent()
     
     def process_task(self, task: TaskInput) -> DecisionResult:
         self.state.current_task = task
