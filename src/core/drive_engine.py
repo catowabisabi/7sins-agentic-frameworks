@@ -338,8 +338,8 @@ class DriveEngineRegistry:
         """
         Adjust drive weights based on win rates to prevent stagnation.
         
-        - If win_rate > DOMINANCE_THRESHOLD (0.6): increase weight (+0.05, max MAX_WEIGHT 0.95)
-        - If win_rate < SUPPRESSION_THRESHOLD (0.1): decrease weight (-0.05, min MIN_WEIGHT 0.1)
+        - If win_rate > DOMINANCE_THRESHOLD (0.6): decrease weight (-0.05, suppress dominance)
+        - If win_rate < SUPPRESSION_THRESHOLD (0.1): increase weight (+0.05, boost suppressed)
         - Normal range: no change
         - Stagnation prevention: small random perturbation if no weight change in 20+ history entries
         """
@@ -359,14 +359,14 @@ class DriveEngineRegistry:
             win_rate = engine.state.get_win_rate()
             
             if win_rate > engine.state.DOMINANCE_THRESHOLD:
-                # Dominant drive - increase weight
-                delta = 0.05
+                # Dominant drive - decrease weight (suppress dominance)
+                delta = -0.05
                 old_weight = engine.state.weight
                 engine.adjust_weight(delta)
                 adjustments_made = True
             elif win_rate < engine.state.SUPPRESSION_THRESHOLD:
-                # Suppressed drive - decrease weight
-                delta = -0.05
+                # Suppressed drive - increase weight (boost suppressed)
+                delta = 0.05
                 old_weight = engine.state.weight
                 engine.adjust_weight(delta)
                 adjustments_made = True
