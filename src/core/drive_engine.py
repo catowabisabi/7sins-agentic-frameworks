@@ -399,7 +399,7 @@ class DriveEngineRegistry:
                 engine.state.record_win()
             else:
                 engine.state.record_loss()
-        self.adjust_weights()
+        self.normalize_weights()
     
     def get_dominance_report(self) -> Dict[str, Any]:
         """Get a report on current drive dominance patterns"""
