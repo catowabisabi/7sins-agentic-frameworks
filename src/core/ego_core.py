@@ -177,25 +177,16 @@ class EGOCore:
         # Veto check: allow any drive with full veto power (1.0) to override the vote winner
         final_recommendation = winner[0].recommendation
         veto_override = False
-        max_veto_power = 0.0
         
         for engine in self.registry.get_all():
             veto_power = engine.get_veto_power()
-            if veto_power > max_veto_power:
-                max_veto_power = veto_power
             if veto_power >= 1.0:
                 # Full veto - use this engine's recommendation
                 recent_opinions = engine.get_recent_opinions(limit=1)
                 if recent_opinions:
                     final_recommendation = recent_opinions[0].recommendation
                     veto_override = True
-        
-        if veto_override:
-            # Mark veto as used for the overriding drive
-            for engine in self.registry.get_all():
-                if engine.get_veto_power() >= 1.0:
-                    engine.state.veto_used = True
-                    break
+                engine.state.veto_used = True
         
         self.registry.record_decision_outcome(winner[0].drive)
         
