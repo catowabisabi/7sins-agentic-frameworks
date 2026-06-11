@@ -178,6 +178,12 @@ class EGOCore:
         final_recommendation = winner[0].recommendation
         veto_override = False
         
+        # NOTE: Multiple veto triggers are expected design.
+        # When multiple engines have veto_power >= 1.0:
+        # - All get veto_used = True (logged for audit)
+        # - Only the LAST engine's recommendation is used (last-engine-wins)
+        # This is intentional — the loop processes all engines for complete audit logging.
+        
         for engine in self.registry.get_all():
             veto_power = engine.get_veto_power()
             if veto_power >= 1.0:
