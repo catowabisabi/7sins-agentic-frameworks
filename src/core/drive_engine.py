@@ -333,65 +333,7 @@ class DriveEngineRegistry:
             adjustments[suppressed_engine.drive_type.value] = delta
         
         return adjustments
-    
-    def adjust_weights(self):
-        """
-        Adjust drive weights based on win rates to prevent stagnation.
-        
-        - If win_rate > DOMINANCE_THRESHOLD (0.6): decrease weight (-0.05, suppress dominance)
-        - If win_rate < SUPPRESSION_THRESHOLD (0.1): increase weight (+0.05, boost suppressed)
-        - Normal range: no change
-        - Stagnation prevention: small random perturbation if no weight change in 20+ history entries
-        """
-        import random
-        
-        engines = list(self._engines.values())
-        if not engines:
-            return
-        
-        total_decisions = sum(e.state.decision_wins + e.state.decision_losses for e in engines)
-        if total_decisions < 5:
-            return  # Not enough data for meaningful adjustment
-        
-        adjustments_made = False
-        
-        for engine in engines:
-            win_rate = engine.state.get_win_rate()
-            
-            if win_rate > engine.state.DOMINANCE_THRESHOLD:
-                # Dominant drive - decrease weight (suppress dominance)
-                delta = -0.05
-                old_weight = engine.state.weight
-                engine.adjust_weight(delta)
-                adjustments_made = True
-            elif win_rate < engine.state.SUPPRESSION_THRESHOLD:
-                # Suppressed drive - increase weight (boost suppressed)
-                delta = 0.05
-                old_weight = engine.state.weight
-                engine.adjust_weight(delta)
-                adjustments_made = True
-        
-        # Stagnation prevention: if all drives have 20+ history entries with little variation, apply small perturbation
-        if not adjustments_made:
-            all_stagnated = True
-            for engine in engines:
-                history = engine.state.weight_history
-                if len(history) < 20:
-                    all_stagnated = False
-                    break
-                # Check if weights have remained stable
-                recent_weights = history[-20:]
-                weight_variance = max(recent_weights) - min(recent_weights)
-                if weight_variance > 0.01:  # If there's meaningful variation
-                    all_stagnated = False
-                    break
-            
-            if all_stagnated:
-                # Apply small random perturbation to a random drive
-                target_engine = random.choice(engines)
-                perturbation = random.uniform(-0.02, 0.02)
-                target_engine.adjust_weight(perturbation)
-    
+
     def record_decision_outcome(self, winning_drive: DriveType):
         """Record the outcome of a decision for weight evolution tracking"""
         for engine in self._engines.values():
