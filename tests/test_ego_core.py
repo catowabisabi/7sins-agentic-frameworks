@@ -13,9 +13,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Any, Tuple
 
-import sys
-sys.path.insert(0, '/mnt/c/Users/enoma/Desktop/7')
-
 from src.core.ego_core import (
     AuditLogger,
     DecisionPhase,
