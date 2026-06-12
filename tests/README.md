@@ -1,5 +1,20 @@
 # Tests
 
+[![CI](https://img.shields.io/badge/CI-status%20unknown-yellow)](https://github.com/your-org/7sins/actions)
+
+## Running Tests
+
+```bash
+pytest tests/
+```
+
+## Test Classification
+
+| Type | Location | Description |
+|------|----------|-------------|
+| **Unit Tests** | `tests/test_*.py` | Test individual components in isolation |
+| **Integration Tests** | `tests/test_integration.py` | Test interactions between components |
+
 ## Test Environment Setup
 
 `conftest.py` automatically injects the repo root into `sys.path` at session start, so test files can import project modules without hardcoded paths.
