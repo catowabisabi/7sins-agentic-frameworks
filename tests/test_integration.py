@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
 
 import sys
-sys.path.insert(0, '/mnt/c/Users/enoma/Desktop/7')
 
 from src.core.ego_core import (
     AuditLogger,
