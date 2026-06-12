@@ -10,9 +10,6 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, List, Any
 
-import sys
-sys.path.insert(0, '/mnt/c/Users/enoma/Desktop/7')
-
 from src.core.drive_engine import DriveType, DriveOpinion, DriveState, DriveEngine
 from src.engines.seven_sins import (
     GluttonyEngine,
