@@ -1,6 +1,13 @@
 """
-pytest configuration for 7Sins Project
-Auto-injects repo root into sys.path so test files don't need hardcoded paths.
+pytest configuration for 7Sins Project.
+
+Setup:
+  - Auto-injects repo root into sys.path at session start, so test files
+    can import project modules without hardcoded paths.
+
+Fixtures:
+  - reset_sys_path (autouse=True): Saves sys.path before each test and
+    restores it after, preventing test-to-test pollution.
 """
 import os
 import sys
