@@ -49,12 +49,12 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
         
         drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
         
-        from src.engines.seven_sins import _get_llm_provider, _build_task_prompt, _parse_llm_opinion
+        from src.engines.seven_sins import _get_llm_provider, _build_task_prompt, _parse_llm_opinion, _call_llm_with_retry
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Sloth", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt, self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)

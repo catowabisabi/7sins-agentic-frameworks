@@ -61,12 +61,12 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
             except SearchUnavailableError:
                 logger.warning("Search tool unavailable - proceeding without research data")
         
-        from src.engines.seven_sins import _get_llm_provider, _build_task_prompt, _parse_llm_opinion
+        from src.engines.seven_sins import _get_llm_provider, _build_task_prompt, _parse_llm_opinion, _call_llm_with_retry
         provider = _get_llm_provider()
         prompt = _build_task_prompt(task, context, "Gluttony", self.specialization)
         
         try:
-            response = provider.complete(prompt=prompt, system_prompt=self.system_prompt)
+            response = _call_llm_with_retry(provider, prompt, self.system_prompt)
             opinion = _parse_llm_opinion(response, self.drive_type)
             opinion.confidence = opinion.confidence * drive_weight
             self.add_opinion(opinion)
