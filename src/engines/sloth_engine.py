@@ -3,7 +3,7 @@ SlothEngine - Lazy Genius Drive Engine
 """
 
 from typing import Dict, List, Any, Optional
-from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
 
 
 __all__ = ['SlothEngine']
@@ -63,7 +63,7 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Can be automated: {task.get('description', 'No description')}",
-                confidence=0.8,
+                confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Automate the task or part of it",
                 risk_level="low"
             )

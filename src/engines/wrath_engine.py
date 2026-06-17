@@ -3,7 +3,7 @@ WrathEngine - Zero-Tolerance Guardian Drive Engine
 """
 
 from typing import Dict, List, Any, Optional
-from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
 
 
 __all__ = ['WrathEngine']
@@ -63,7 +63,7 @@ Your standard: Any error present = fix required. No compromise, no 'good enough 
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Error check: {task.get('description', 'No description')}",
-                confidence=0.95,
+                confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Fix all errors before proceeding",
                 risk_level="high"
             )

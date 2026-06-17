@@ -3,7 +3,7 @@ EnvyEngine - Competitive Analyst Drive Engine
 """
 
 from typing import Dict, List, Any, Optional
-from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
 import logging
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Benchmark check: {task.get('description', 'No description')}",
-                confidence=0.6,
+                confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Benchmark against best practices",
                 risk_level="medium"
             )

@@ -3,7 +3,7 @@ PrideEngine - Quality Arbiter Drive Engine
 """
 
 from typing import Dict, List, Any, Optional
-from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
 
 
 __all__ = ['PrideEngine']
@@ -63,7 +63,7 @@ Your standard: You will be remembered by the weakest thing you allowed to pass. 
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Quality demand: {task.get('description', 'No description')}",
-                confidence=0.7,
+                confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Ensure high quality, proper standards",
                 risk_level="medium"
             )
