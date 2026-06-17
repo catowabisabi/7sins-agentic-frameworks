@@ -4,9 +4,6 @@ GluttonyEngine - Knowledge Harvester Drive Engine
 
 from typing import Dict, List, Any, Optional
 from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 __all__ = ['GluttonyEngine']
@@ -50,16 +47,8 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
         
         drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
         
-        is_research = any(kw in task_type for kw in ["research", "search", "investigate"])
-        if is_research:
-            try:
-                from src.tools.search import get_search_tool, SearchUnavailableError
-                search_tool = get_search_tool()
-                search_results = search_tool.search(task.get("description", ""), count=10)
-                if search_results:
-                    context["search_results"] = search_results
-            except SearchUnavailableError:
-                logger.warning("Search tool unavailable - proceeding without research data")
+        from src.engines._search_helpers import inject_research_context
+        inject_research_context(task, context)
         
         from src.engines.seven_sins import _get_llm_provider, _build_task_prompt, _parse_llm_opinion, _call_llm_with_retry
         provider = _get_llm_provider()

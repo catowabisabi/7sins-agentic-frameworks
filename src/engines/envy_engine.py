@@ -4,9 +4,6 @@ EnvyEngine - Competitive Analyst Drive Engine
 
 from typing import Dict, List, Any, Optional
 from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 __all__ = ['EnvyEngine']
@@ -52,16 +49,8 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
         
         drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
         
-        is_competitive = any(kw in task_type for kw in ["competitor", "benchmark", "compare"])
-        if is_competitive:
-            try:
-                from src.tools.search import get_search_tool, SearchUnavailableError
-                search_tool = get_search_tool()
-                competitor_results = search_tool.search(task.get("description", ""), count=10)
-                if competitor_results:
-                    context["competitor_info"] = competitor_results
-            except SearchUnavailableError:
-                logger.warning("Search tool unavailable - proceeding without competitor data")
+        from src.engines._search_helpers import inject_competitor_search
+        inject_competitor_search(task, context)
         
         from src.engines.seven_sins import _get_llm_provider, _build_task_prompt, _parse_llm_opinion, _call_llm_with_retry
         provider = _get_llm_provider()
