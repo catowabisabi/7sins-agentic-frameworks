@@ -1,6 +1,6 @@
 # seven_sins.py 拆分計劃
 
-> **📋 驗收狀態**: `#33` ✅ (drive engine extraction) | `#34` ✅ (retry wrapper) | `#36` ✅ (Eros/Thanatos split) | **7-engine split ✓**
+> **📋 驗收狀態**: `#33` ✅ (drive engine extraction) | `#34` ✅ (retry wrapper) | `#36` ✅ (Eros/Thanatos split) | `#37` ✅ (doc relocation) | `#41` ✅ (7-engine loading-order tests) | **7-engine split ✓**
 > 
 
 
