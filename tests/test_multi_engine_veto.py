@@ -608,5 +608,165 @@ class TestEdgeCases:
         assert result.selected_drives is not None
 
 
+# =============================================================================
+# Test: Engine Registration and Loading Order
+# =============================================================================
+
+class TestEngineRegistrationOrder:
+    """Tests for engine registration/loading order consistency.
+    
+    These tests verify:
+    1. All 7 engines can be imported and instantiated without error
+    2. Engine loading order is consistent across repeated initialization
+    3. All 7 engines are always present after registration
+    """
+    
+    def test_engine_loading_order_consistent(self, mock_provider, mock_search):
+        """Test that engine loading order is consistent across multiple instantiations.
+        
+        This test repeatedly instantiates the DriveEngineRegistry with the same
+        7 engines and verifies the order of engines returned by get_all() is
+        identical each time.
+        """
+        # Expected registration order based on seven_sins_registry fixture
+        expected_order = [
+            DriveType.GLUTTONY,
+            DriveType.LUST,
+            DriveType.GREED,
+            DriveType.SLOTH,
+            DriveType.PRIDE,
+            DriveType.WRATH,
+            DriveType.ENVY,
+        ]
+        
+        # Create multiple registries and collect the order each time
+        orders = []
+        
+        for _ in range(5):
+            with patch('src.engines.seven_sins._get_llm_provider', return_value=mock_provider):
+                with patch('src.engines.seven_sins.get_search_tool', return_value=mock_search):
+                    reg = DriveEngineRegistry()
+                    
+                    engine_configs = [
+                        (GluttonyEngine, DriveType.GLUTTONY),
+                        (LustEngine, DriveType.LUST),
+                        (GreedEngine, DriveType.GREED),
+                        (SlothEngine, DriveType.SLOTH),
+                        (PrideEngine, DriveType.PRIDE),
+                        (WrathEngine, DriveType.WRATH),
+                        (EnvyEngine, DriveType.ENVY),
+                    ]
+                    
+                    for engine_class, drive_type in engine_configs:
+                        engine = engine_class()
+                        # Patch evaluate to convert TaskInput to dict (same as fixture)
+                        original_evaluate = engine.evaluate
+                        
+                        def make_safe_evaluate(orig_evaluate, eng=engine):
+                            def safe_evaluate(task, context):
+                                if hasattr(task, 'task_type'):
+                                    task_dict = {
+                                        "description": task.description,
+                                        "task_type": task.task_type,
+                                        "constraints": task.constraints,
+                                        "context": task.context,
+                                        "priority": task.priority
+                                    }
+                                    return orig_evaluate(task_dict, context)
+                                return orig_evaluate(task, context)
+                            return safe_evaluate
+                        
+                        engine.evaluate = make_safe_evaluate(original_evaluate, engine)
+                        reg.register(engine)
+                    
+                    # Record the order of engines from get_all()
+                    current_order = [e.drive_type for e in reg.get_all()]
+                    orders.append(current_order)
+        
+        # Verify all orders are identical
+        first_order = orders[0]
+        for i, order in enumerate(orders[1:], start=2):
+            assert order == first_order, (
+                f"Engine loading order inconsistent on iteration {i}. "
+                f"Expected {first_order}, got {order}"
+            )
+        
+        # Verify the order matches expected
+        assert first_order == expected_order, (
+            f"Engine loading order does not match expected. "
+            f"Expected {expected_order}, got {first_order}"
+        )
+    
+    def test_engine_registration_completeness(self, mock_provider, mock_search):
+        """Test that all 7 engines are always present after registration.
+        
+        This test verifies that after repeated registrations, all 7 engines
+        (PrideEngine, GreedEngine, LustEngine, EnvyEngine, GluttonyEngine,
+        WrathEngine, SlothEngine) are always present and retrievable.
+        """
+        expected_drives = {
+            DriveType.GLUTTONY,
+            DriveType.LUST,
+            DriveType.GREED,
+            DriveType.SLOTH,
+            DriveType.PRIDE,
+            DriveType.WRATH,
+            DriveType.ENVY,
+        }
+        
+        for iteration in range(5):
+            with patch('src.engines.seven_sins._get_llm_provider', return_value=mock_provider):
+                with patch('src.engines.seven_sins.get_search_tool', return_value=mock_search):
+                    reg = DriveEngineRegistry()
+                    
+                    engine_configs = [
+                        (GluttonyEngine, DriveType.GLUTTONY),
+                        (LustEngine, DriveType.LUST),
+                        (GreedEngine, DriveType.GREED),
+                        (SlothEngine, DriveType.SLOTH),
+                        (PrideEngine, DriveType.PRIDE),
+                        (WrathEngine, DriveType.WRATH),
+                        (EnvyEngine, DriveType.ENVY),
+                    ]
+                    
+                    for engine_class, drive_type in engine_configs:
+                        engine = engine_class()
+                        # Patch evaluate to convert TaskInput to dict
+                        original_evaluate = engine.evaluate
+                        
+                        def make_safe_evaluate(orig_evaluate, eng=engine):
+                            def safe_evaluate(task, context):
+                                if hasattr(task, 'task_type'):
+                                    task_dict = {
+                                        "description": task.description,
+                                        "task_type": task.task_type,
+                                        "constraints": task.constraints,
+                                        "context": task.context,
+                                        "priority": task.priority
+                                    }
+                                    return orig_evaluate(task_dict, context)
+                                return orig_evaluate(task, context)
+                            return safe_evaluate
+                        
+                        engine.evaluate = make_safe_evaluate(original_evaluate, engine)
+                        reg.register(engine)
+                    
+                    # Verify all engines are registered
+                    registered_drives = {e.drive_type for e in reg.get_all()}
+                    assert registered_drives == expected_drives, (
+                        f"Iteration {iteration + 1}: Expected engines {expected_drives}, "
+                        f"got {registered_drives}"
+                    )
+                    
+                    # Verify each engine can be retrieved by type
+                    for drive_type in expected_drives:
+                        engine = reg.get(drive_type)
+                        assert engine is not None, (
+                            f"Iteration {iteration + 1}: Failed to retrieve {drive_type}"
+                        )
+                        assert isinstance(engine, DriveEngine)
+                        assert engine.drive_type == drive_type
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
