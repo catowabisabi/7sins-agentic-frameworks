@@ -66,7 +66,6 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Benchmark check: {task.get('description', 'No description')}",
-                # FALLBACK_CONFIDENCE = 0.75 for all drive types (defined in drive_engine.py)
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Benchmark against best practices",
                 risk_level="medium"

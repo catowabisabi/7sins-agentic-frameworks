@@ -63,7 +63,6 @@ You execute a mental arbitrage: seeking maximum value extraction per unit of inv
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Value opportunity: {task.get('description', 'No description')}",
-                # FALLBACK_CONFIDENCE = 0.75 for all drive types (defined in drive_engine.py)
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Focus on delivering user value and market impact",
                 risk_level="medium"
