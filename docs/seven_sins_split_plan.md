@@ -1,5 +1,9 @@
 # seven_sins.py 拆分計劃
 
+> **📋 驗收狀態**: `#33` ✅ (drive engine extraction) | `#34` ✅ (retry wrapper) | `#36` ✅ (Eros/Thanatos split) | **7-engine split ✓**
+> 
+
+
 ## 1. 現有架構描述
 
 ### 1.1 seven_sins.py 的當前角色
