@@ -3,7 +3,7 @@ LustEngine - Sovereign Architect Drive Engine
 """
 
 from typing import Dict, List, Any, Optional
-from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
 
 
 __all__ = ['LustEngine']
@@ -63,7 +63,7 @@ Your ideal outcome: Clear ownership maps, explicit permission flows, auditable c
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Controlled approach required for: {task.get('description', 'No description')}",
-                confidence=0.7,
+                confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Ensure systematic approach with clear ownership",
                 risk_level="low"
             )

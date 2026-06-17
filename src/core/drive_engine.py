@@ -24,6 +24,47 @@ class DriveType(Enum):
     THANATOS = "thanatos"
 
 
+# =============================================================================
+# FALLBACK_CONFIDENCE POLICY
+# =============================================================================
+# Fallback confidence values used when LLM calls fail after retries.
+# Each engine has a tuned value reflecting its risk tolerance and behavior:
+#
+# - WRATH (0.95): Zero-tolerance guardian. High fallback because errors/bugs
+#   are always high-risk and demand immediate attention. Cannot let problems pass.
+#
+# - GLUTTONY (0.80): Knowledge harvester. High fallback because knowledge gaps
+#   are serious — better to research more than to proceed blindly.
+#
+# - SLOTH (0.80): Lazy genius. High fallback because automation opportunities
+#   and reuse potential are often high-value; better to explore them.
+#
+# - GREED (0.75): Value maximizer. Moderate-high fallback because value
+#   opportunities are important but some exploration is acceptable.
+#
+# - LUST (0.70): Sovereign architect. Moderate fallback because control/ownership
+#   is important but systematic approaches can handle uncertainty.
+#
+# - PRIDE (0.70): Quality arbiter. Moderate fallback because quality standards
+#   matter but some flexibility is acceptable for practicality.
+#
+# - ENVY (0.60): Competitive analyst. Lower fallback because benchmarking against
+#   competitors can proceed with less certainty; comparison is still valuable.
+#
+# These values are not tuned machine-learned weights — they reflect each drive's
+# philosophical tolerance for uncertainty when the LLM cannot provide guidance.
+# =============================================================================
+FALLBACK_CONFIDENCE = {
+    DriveType.WRATH: 0.95,
+    DriveType.GLUTTONY: 0.80,
+    DriveType.SLOTH: 0.80,
+    DriveType.GREED: 0.75,
+    DriveType.LUST: 0.70,
+    DriveType.PRIDE: 0.70,
+    DriveType.ENVY: 0.60,
+}
+
+
 @dataclass
 class DriveState:
     name: DriveType

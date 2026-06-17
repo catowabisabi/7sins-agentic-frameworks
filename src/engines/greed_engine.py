@@ -3,7 +3,7 @@ GreedEngine - Value Maximizer Drive Engine
 """
 
 from typing import Dict, List, Any, Optional
-from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
 
 
 __all__ = ['GreedEngine']
@@ -63,7 +63,7 @@ You execute a mental arbitrage: seeking maximum value extraction per unit of inv
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Value opportunity: {task.get('description', 'No description')}",
-                confidence=0.75,
+                confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Focus on delivering user value and market impact",
                 risk_level="medium"
             )

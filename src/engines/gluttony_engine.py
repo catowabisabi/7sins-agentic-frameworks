@@ -3,7 +3,7 @@ GluttonyEngine - Knowledge Harvester Drive Engine
 """
 
 from typing import Dict, List, Any, Optional
-from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion
+from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
 import logging
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Research deeply: {task.get('description', 'No description')}",
-                confidence=0.8,
+                confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Research deeply before execution",
                 risk_level="medium"
             )
