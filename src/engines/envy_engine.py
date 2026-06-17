@@ -49,7 +49,7 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
         
         drive_weight = eros_weight if is_creation else (thanatos_weight if is_destruction else 0.5)
         
-        from src.engines._search_helpers import inject_competitor_search
+        from src.engines.envy_gluttony_helpers import inject_competitor_search
         inject_competitor_search(task, context)
         
         from src.engines.seven_sins import _get_llm_provider, _build_task_prompt, _parse_llm_opinion, _call_llm_with_retry
