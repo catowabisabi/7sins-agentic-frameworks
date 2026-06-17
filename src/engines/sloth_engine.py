@@ -63,6 +63,7 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Can be automated: {task.get('description', 'No description')}",
+                # FALLBACK_CONFIDENCE = 0.75 for all drive types (defined in drive_engine.py)
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Automate the task or part of it",
                 risk_level="low"

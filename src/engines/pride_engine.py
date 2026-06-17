@@ -63,6 +63,7 @@ Your standard: You will be remembered by the weakest thing you allowed to pass. 
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Quality demand: {task.get('description', 'No description')}",
+                # FALLBACK_CONFIDENCE = 0.75 for all drive types (defined in drive_engine.py)
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Ensure high quality, proper standards",
                 risk_level="medium"

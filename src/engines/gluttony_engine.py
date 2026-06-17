@@ -65,6 +65,7 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Research deeply: {task.get('description', 'No description')}",
+                # FALLBACK_CONFIDENCE = 0.75 for all drive types (defined in drive_engine.py)
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Research deeply before execution",
                 risk_level="medium"

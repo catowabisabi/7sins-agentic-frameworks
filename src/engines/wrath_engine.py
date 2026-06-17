@@ -63,6 +63,7 @@ Your standard: Any error present = fix required. No compromise, no 'good enough 
             return DriveOpinion(
                 drive=self.drive_type,
                 opinion=f"Error check: {task.get('description', 'No description')}",
+                # FALLBACK_CONFIDENCE = 0.75 for all drive types (defined in drive_engine.py)
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Fix all errors before proceeding",
                 risk_level="high"
