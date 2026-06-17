@@ -240,6 +240,30 @@ class TestMultipleVetoTriggers:
         assert veto_engine_1.state.veto_used is True
         assert veto_engine_2.state.veto_used is True
 
+    def test_multiple_veto_engines_last_wins(self, mock_persistence, sample_task, temp_log_dir):
+        """Test that when multiple engines have veto_power >= 1.0, last engine's recommendation wins (GREED + WRATH)."""
+        # Create registry with two veto engines using GREED and WRATH
+        reg = DriveEngineRegistry()
+        veto_engine_1 = MockVetoEngineWithOpinion(DriveType.GREED, 0.7, veto_power=1.0,
+                                                  veto_recommendation="GREED VETO")
+        veto_engine_2 = MockVetoEngineWithOpinion(DriveType.WRATH, 0.6, veto_power=1.0,
+                                                  veto_recommendation="WRATH VETO")
+        
+        reg.register(veto_engine_1)
+        reg.register(veto_engine_2)
+        
+        with patch('src.core.ego_core.get_persistence_manager', return_value=mock_persistence):
+            core = EGOCore(reg)
+        
+        result = core.process_task(sample_task)
+        
+        # Last engine (WRATH) should win due to last-engine-wins behavior
+        assert result.recommendation == "WRATH VETO"
+        assert "(veto override)" in result.reasoning
+        # Both engines should have veto_used = True
+        assert veto_engine_1.state.veto_used is True
+        assert veto_engine_2.state.veto_used is True
+
 
 # =============================================================================
 # Test: No Veto Trigger
