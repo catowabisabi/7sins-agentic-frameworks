@@ -32,8 +32,7 @@ Your standard: You will be remembered by the weakest thing you allowed to pass. 
     
     @property
     def veto_condition(self) -> str:
-        from src.engines.seven_sins import VETO_CONDITIONS
-        return VETO_CONDITIONS[DriveType.PRIDE.value]
+        return "Code does not meet quality standards"
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
