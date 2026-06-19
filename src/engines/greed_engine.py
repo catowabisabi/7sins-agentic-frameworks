@@ -32,7 +32,8 @@ You execute a mental arbitrage: seeking maximum value extraction per unit of inv
     
     @property
     def veto_condition(self) -> str:
-        return "No clear value proposition or ROI"
+        from src.engines.seven_sins import VETO_CONDITIONS
+        return VETO_CONDITIONS[DriveType.GREED.value]
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.8)

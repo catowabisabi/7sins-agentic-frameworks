@@ -32,7 +32,8 @@ Your standard: Any error present = fix required. No compromise, no 'good enough 
     
     @property
     def veto_condition(self) -> str:
-        return "Any error present - no compromises"
+        from src.engines.seven_sins import VETO_CONDITIONS
+        return VETO_CONDITIONS[DriveType.WRATH.value]
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.9)
