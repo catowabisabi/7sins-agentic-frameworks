@@ -20,6 +20,17 @@ INITIAL_BACKOFF = 1.0  # seconds
 MAX_BACKOFF = 10.0  # seconds
 BACKOFF_MULTIPLIER = 2.0
 
+# Registry of veto conditions for each engine (documentation/navigation aid)
+VETO_CONDITIONS = {
+    "PrideEngine": "Code does not meet quality standards",
+    "GreedEngine": "No clear value proposition or ROI",
+    "WrathEngine": "Any error present - no compromises",
+    "SlothEngine": "Automation would introduce more complexity than it solves",
+    "EnvyEngine": "Our solution is inferior to competition",
+    "GluttonyEngine": "Insufficient information to make decision",
+    "LustEngine": "Loss of control or system integrity",
+}
+
 
 def _is_transient_error(e: Exception) -> bool:
     """Determine if an exception is a transient error that should be retried.
