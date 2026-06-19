@@ -249,23 +249,7 @@ __all__ = [
     'SlothEngine',
     'ErosEngine',
     'ThanatosEngine',
-    'VETO_CONDITIONS',
 ]
-
-
-# Registry of veto_condition summaries for each DriveType
-# Maps DriveType value (string) to a one-line docstring summarizing when the drive vetoes
-VETO_CONDITIONS: Dict[str, str] = {
-    DriveType.PRIDE.value: "Code does not meet quality standards",
-    DriveType.GREED.value: "No clear value proposition or ROI",
-    DriveType.LUST.value: "Loss of control or system integrity",
-    DriveType.ENVY.value: "Our solution is inferior to competition",
-    DriveType.GLUTTONY.value: "Insufficient information to make decision",
-    DriveType.WRATH.value: "Any error present - no compromises",
-    DriveType.SLOTH.value: "Automation would introduce more complexity than it solves",
-    DriveType.EROS.value: "Pure destruction with no constructive outcome",
-    DriveType.THANATOS.value: "Irreversible destruction of significant value",
-}
 
 
 class ErosEngine(DriveEngine):
@@ -297,7 +281,7 @@ Your ideal outcome: Something new exists that didn't before. Value created. Life
     
     @property
     def veto_condition(self) -> str:
-        return VETO_CONDITIONS[DriveType.EROS.value]
+        return "Pure destruction with no constructive outcome"
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)
@@ -380,7 +364,7 @@ Your ideal outcome: Clean separation of what must go from what should stay. Obso
     
     @property
     def veto_condition(self) -> str:
-        return VETO_CONDITIONS[DriveType.THANATOS.value]
+        return "Irreversible destruction of significant value"
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.5)
