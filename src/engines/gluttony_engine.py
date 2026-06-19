@@ -30,7 +30,8 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
     
     @property
     def veto_condition(self) -> str:
-        return "Insufficient information to make decision"
+        from src.engines.seven_sins import VETO_CONDITIONS
+        return VETO_CONDITIONS[DriveType.GLUTTONY.value]
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.7)

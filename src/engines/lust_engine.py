@@ -32,7 +32,8 @@ Your ideal outcome: Clear ownership maps, explicit permission flows, auditable c
     
     @property
     def veto_condition(self) -> str:
-        return "Loss of control or system integrity"
+        from src.engines.seven_sins import VETO_CONDITIONS
+        return VETO_CONDITIONS[DriveType.LUST.value]
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.6)

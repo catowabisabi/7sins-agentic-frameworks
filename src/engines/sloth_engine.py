@@ -32,7 +32,8 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
     
     @property
     def veto_condition(self) -> str:
-        return "Automation would introduce more complexity than it solves"
+        from src.engines.seven_sins import VETO_CONDITIONS
+        return VETO_CONDITIONS[DriveType.SLOTH.value]
     
     def evaluate(self, task: Dict[str, Any], context: Dict[str, Any]) -> DriveOpinion:
         self.state.activate(0.7)
