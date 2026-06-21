@@ -8,6 +8,7 @@ which are used by EnvyEngine and GluttonyEngine respectively.
 import pytest
 from unittest.mock import MagicMock, patch
 
+from src.core.ego_core import TaskInput
 from src.engines.envy_gluttony_helpers import (
     inject_competitor_search,
     inject_research_context,
@@ -20,7 +21,7 @@ class TestInjectCompetitorSearch:
 
     def test_injects_competitor_info_on_competitive_task_type(self):
         """AC1: Verify competitor_info injected when task_type matches competitive keywords."""
-        task = {"task_type": "competitor_analysis", "description": "analyze competitors"}
+        task = TaskInput(task_type="competitor_analysis", description="analyze competitors")
         context = {}
         mock_search_tool = MagicMock()
         mock_search_tool.search.return_value = [{"name": "CompetitorA"}, {"name": "CompetitorB"}]
@@ -34,7 +35,7 @@ class TestInjectCompetitorSearch:
 
     def test_injects_competitor_info_on_benchmark_task_type(self):
         """Verify competitor_info injected when task_type contains 'benchmark'."""
-        task = {"task_type": "benchmark_study", "description": "benchmark study"}
+        task = TaskInput(task_type="benchmark_study", description="benchmark study")
         context = {}
         mock_search_tool = MagicMock()
         mock_search_tool.search.return_value = [{"name": "BenchmarkData"}]
@@ -47,7 +48,7 @@ class TestInjectCompetitorSearch:
 
     def test_injects_competitor_info_on_compare_task_type(self):
         """Verify competitor_info injected when task_type contains 'compare'."""
-        task = {"task_type": "compare_products", "description": "compare products"}
+        task = TaskInput(task_type="compare_products", description="compare products")
         context = {}
         mock_search_tool = MagicMock()
         mock_search_tool.search.return_value = [{"name": "ProductA"}, {"name": "ProductB"}]
@@ -59,7 +60,7 @@ class TestInjectCompetitorSearch:
 
     def test_handles_search_unavailable_error_gracefully(self):
         """AC3: Verify graceful handling when SearchUnavailableError is raised."""
-        task = {"task_type": "competitor_analysis", "description": "analyze competitors"}
+        task = TaskInput(task_type="competitor_analysis", description="analyze competitors")
         context = {}
 
         with patch("src.engines.envy_gluttony_helpers.get_search_tool") as mock_get_tool:
@@ -71,7 +72,7 @@ class TestInjectCompetitorSearch:
 
     def test_no_op_when_task_type_does_not_match_keywords(self):
         """AC4: Verify no-op when task_type does not contain competitive keywords."""
-        task = {"task_type": "regular_task", "description": "some regular task"}
+        task = TaskInput(task_type="regular_task", description="some regular task")
         context = {}
         mock_search_tool = MagicMock()
 
@@ -84,7 +85,7 @@ class TestInjectCompetitorSearch:
 
     def test_no_op_when_task_type_is_empty(self):
         """Verify no-op when task_type is empty string."""
-        task = {"task_type": "", "description": "some task"}
+        task = TaskInput(task_type="", description="some task")
         context = {}
         mock_search_tool = MagicMock()
 
@@ -96,7 +97,7 @@ class TestInjectCompetitorSearch:
 
     def test_no_op_when_task_type_missing(self):
         """Verify no-op when task_type key is missing from task."""
-        task = {"description": "some task"}
+        task = TaskInput(task_type="", description="some task")
         context = {}
         mock_search_tool = MagicMock()
 
@@ -108,7 +109,7 @@ class TestInjectCompetitorSearch:
 
     def test_no_injection_when_search_returns_empty_results(self):
         """Verify no competitor_info injected when search returns empty list."""
-        task = {"task_type": "competitor_analysis", "description": "analyze competitors"}
+        task = TaskInput(task_type="competitor_analysis", description="analyze competitors")
         context = {}
         mock_search_tool = MagicMock()
         mock_search_tool.search.return_value = []
@@ -124,7 +125,7 @@ class TestInjectResearchContext:
 
     def test_injects_search_results_on_research_task_type(self):
         """AC2: Verify search_results injected when task_type matches research keywords."""
-        task = {"task_type": "research_analysis", "description": "research topics"}
+        task = TaskInput(task_type="research_analysis", description="research topics")
         context = {}
         mock_search_tool = MagicMock()
         mock_search_tool.search.return_value = [{"title": "Article1"}, {"title": "Article2"}]
@@ -138,7 +139,7 @@ class TestInjectResearchContext:
 
     def test_injects_search_results_on_search_task_type(self):
         """Verify search_results injected when task_type contains 'search'."""
-        task = {"task_type": "search_inventory", "description": "search inventory"}
+        task = TaskInput(task_type="search_inventory", description="search inventory")
         context = {}
         mock_search_tool = MagicMock()
         mock_search_tool.search.return_value = [{"title": "InventoryItem"}]
@@ -151,7 +152,7 @@ class TestInjectResearchContext:
 
     def test_injects_search_results_on_investigate_task_type(self):
         """Verify search_results injected when task_type contains 'investigate'."""
-        task = {"task_type": "investigate_issue", "description": "investigate the issue"}
+        task = TaskInput(task_type="investigate_issue", description="investigate the issue")
         context = {}
         mock_search_tool = MagicMock()
         mock_search_tool.search.return_value = [{"title": "IssueData"}]
@@ -163,7 +164,7 @@ class TestInjectResearchContext:
 
     def test_handles_search_unavailable_error_gracefully(self):
         """AC3: Verify graceful handling when SearchUnavailableError is raised."""
-        task = {"task_type": "research_analysis", "description": "research topics"}
+        task = TaskInput(task_type="research_analysis", description="research topics")
         context = {}
 
         with patch("src.engines.envy_gluttony_helpers.get_search_tool") as mock_get_tool:
@@ -175,7 +176,7 @@ class TestInjectResearchContext:
 
     def test_no_op_when_task_type_does_not_match_keywords(self):
         """AC4: Verify no-op when task_type does not contain research keywords."""
-        task = {"task_type": "regular_task", "description": "some regular task"}
+        task = TaskInput(task_type="regular_task", description="some regular task")
         context = {}
         mock_search_tool = MagicMock()
 
@@ -188,7 +189,7 @@ class TestInjectResearchContext:
 
     def test_no_op_when_task_type_is_empty(self):
         """Verify no-op when task_type is empty string."""
-        task = {"task_type": "", "description": "some task"}
+        task = TaskInput(task_type="", description="some task")
         context = {}
         mock_search_tool = MagicMock()
 
@@ -200,7 +201,7 @@ class TestInjectResearchContext:
 
     def test_no_op_when_task_type_missing(self):
         """Verify no-op when task_type key is missing from task."""
-        task = {"description": "some task"}
+        task = TaskInput(task_type="", description="some task")
         context = {}
         mock_search_tool = MagicMock()
 
@@ -212,7 +213,7 @@ class TestInjectResearchContext:
 
     def test_no_injection_when_search_returns_empty_results(self):
         """Verify no search_results injected when search returns empty list."""
-        task = {"task_type": "research_analysis", "description": "research topics"}
+        task = TaskInput(task_type="research_analysis", description="research topics")
         context = {}
         mock_search_tool = MagicMock()
         mock_search_tool.search.return_value = []
