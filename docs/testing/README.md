@@ -1,0 +1,140 @@
+# 7Sins 測試體系總覽
+
+> 繁體中文 | 測試架構版本: 1.0.0 | 建立日期: 2026-06-21
+
+---
+
+## 📋 概述
+
+本項目為純 Python 後端專案（無 HTTP API Server、無 Frontend），測試體系專為以下特性設計：
+- Python 庫 / CLI 工具
+- SQLite 持久化
+- LLM Provider 整合（七個 Sin Engine）
+- 決策引擎 + 辯論機制
+
+---
+
+## 🗂️ 測試層級索引
+
+| 層級 | 名稱 | 文件 | 位置 |
+|------|------|------|------|
+| **A** | 煙霧測試 (Smoke Tests) | [smoke-tests.md](smoke-tests.md) | `tests/smoke/` |
+| **B** | 後端單元測試 (Backend Unit Tests) | [backend-tests.md](backend-tests.md) | `tests/` (現有) |
+| **C** | API 合約測試 (API Contract Tests) | [api-contract-tests.md](api-contract-tests.md) | `tests/api/` |
+| **D** | Mock 測試 | N/A | 無 Frontend |
+| **E** | 前端非 Mock 測試 | N/A | 無 Frontend |
+| **F** | 用戶流程 E2E 測試 | [user-workflow-tests.md](user-workflow-tests.md) | `tests/e2e/` |
+| **G** | 外部 Provider 測試 | [provider-tests.md](provider-tests.md) | `tests/providers/` |
+| **H** | 回歸測試 | [regression-tests.md](regression-tests.md) | `tests/regression/` |
+| **I** | 效能/穩定性測試 | [performance-tests.md](performance-tests.md) | `tests/performance/` |
+| **J** | 無障礙/UX 測試 | N/A | 無 UI |
+
+---
+
+## 📁 目錄結構
+
+```
+7sins/
+├── docs/testing/                    # 測試文件
+│   ├── README.md                    # 本文件
+│   ├── smoke-tests.md               # 煙霧測試
+│   ├── backend-tests.md             # 後端單元測試
+│   ├── api-contract-tests.md        # API 合約測試
+│   ├── user-workflow-tests.md       # 用戶流程 E2E
+│   ├── provider-tests.md            # 外部 Provider 測試
+│   ├── regression-tests.md          # 回歸測試
+│   ├── performance-tests.md         # 效能測試
+│   └── test-database-strategy.md    # 測試 DB 策略
+├── tests/                          # 測試代碼
+│   ├── conftest.py                 # Pytest fixtures + sys.path
+│   ├── smoke/                      # 煙霧測試
+│   │   └── run_smoke_tests.py
+│   ├── api/                        # API 合約測試
+│   │   └── test_api_contracts.py
+│   ├── e2e/                        # E2E 流程測試
+│   │   └── test_user_workflows.py
+│   ├── providers/                  # Provider 測試
+│   │   └── test_llm_providers.py
+│   ├── regression/                 # 回歸測試
+│   │   └── test_regression_*.py
+│   ├── performance/                # 效能測試
+│   │   └── test_performance_*.py
+│   ├── helpers/                    # 測試輔助工具
+│   │   ├── db_isolation.py
+│   │   └── mock_providers.py
+│   └── (existing tests/)           # 現有 173 個測試
+├── runtime/logs/tests/             # 測試報告輸出
+│   └── <timestamp>/
+│       ├── report.md               # 本次測試報告
+│       ├── console.log
+│       ├── pytest.log
+│       ├── db-before.json
+│       ├── db-after.json
+│       └── artifacts/
+└── scripts/
+    └── run_all_tests.sh            # 總測試入口腳本
+```
+
+---
+
+## 🚀 快速開始
+
+### 執行所有測試
+```bash
+cd /mnt/c/Users/enoma/Desktop/opencode-work/agent-works/research/7sins
+bash scripts/run_all_tests.sh
+```
+
+### 執行特定層級
+```bash
+# 煙霧測試
+python -m pytest tests/smoke/ -v
+
+# 後端單元測試
+python -m pytest tests/ -v --ignore=tests/smoke --ignore=tests/e2e
+
+# Provider 測試
+python -m pytest tests/providers/ -v
+
+# 效能測試
+python -m pytest tests/performance/ -v
+```
+
+---
+
+## 📊 現有測試覆蓋
+
+| 測試類別 | 檔案 | 數量 |
+|----------|------|------|
+| EGO-Core 單元測試 | `tests/test_ego_core.py` | ~41 |
+| Veto 機制測試 | `tests/test_ego_core_veto.py` | ~9 |
+| Multi-Engine Veto 測試 | `tests/test_multi_engine_veto.py` | ~7 |
+| Seven Sins 引擎測試 | `tests/test_seven_sins.py` | ~50 |
+| Integration 測試 | `tests/test_integration.py` | ~25 |
+| Envy/Gluttony Helper 測試 | `tests/test_envy_gluttony_helpers.py` | ~16 |
+| Reflection Edge Cases | `tests/test_reflection_edge_cases.py` | ~10 |
+| **總計** | | **173** |
+
+---
+
+## 🔴 未覆蓋風險
+
+1. **真實 LLM Provider 呼叫** — 現有測試全部使用 Mock，未覆蓋實際 MiniMax API
+2. **並發決策競爭條件** — 多執行緒同時調用 `process_task` 未測試
+3. **Persistence Manager 狀態一致性** — SQLite 並發寫入未測試
+4. **Search Tool 真實整合** — 僅 Mock，未測試真實搜索
+5. **LLM 回應格式漂移** — `_parse_llm_opinion` 解析失敗未測試
+6. **磁碟寫滿 / 權限錯誤** — Audit log / persistence 無磁碟空間測試
+7. **EGO-Core 辯論循環** — 3 輪辯論共識失敗邊界未測試
+
+---
+
+## 📝 更新日誌
+
+| 日期 | 版本 | 變更 |
+|------|------|------|
+| 2026-06-21 | 1.0.0 | 初始建立測試體系文件 |
+
+---
+
+*最後更新: 2026-06-21*
