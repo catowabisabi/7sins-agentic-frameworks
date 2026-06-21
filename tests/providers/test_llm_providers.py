@@ -148,6 +148,7 @@ class TestProviderErrorHandling:
         """Provider timeout raises exception."""
         from unittest.mock import Mock, patch
         from src.engines.seven_sins import WrathEngine
+        from src.core.ego_core import TaskInput
 
         engine = WrathEngine()
         mock_provider = Mock()
@@ -156,7 +157,7 @@ class TestProviderErrorHandling:
         with patch.object(engine, "_llm_provider", mock_provider):
             with pytest.raises(TimeoutError):
                 engine.evaluate(
-                    {"description": "test", "task_type": "debug"},
+                    TaskInput(description="test", task_type="debug"),
                     {}
                 )
 
@@ -164,6 +165,7 @@ class TestProviderErrorHandling:
         """Connection error raises exception."""
         from unittest.mock import Mock, patch
         from src.engines.seven_sins import WrathEngine
+        from src.core.ego_core import TaskInput
 
         engine = WrathEngine()
         mock_provider = Mock()
@@ -172,7 +174,7 @@ class TestProviderErrorHandling:
         with patch.object(engine, "_llm_provider", mock_provider):
             with pytest.raises(ConnectionError):
                 engine.evaluate(
-                    {"description": "test", "task_type": "debug"},
+                    TaskInput(description="test", task_type="debug"),
                     {}
                 )
 

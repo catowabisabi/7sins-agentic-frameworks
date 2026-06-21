@@ -159,9 +159,15 @@ def _get_llm_provider() -> 'MiniMaxProvider':
 
 def _build_task_prompt(task: Dict[str, Any], context: Dict[str, Any], engine_name: str, specialization: List[str]) -> str:
     """Build a prompt for the LLM based on task and context"""
-    task_desc = task.get("description", "")
-    task_type = task.get("task_type", "")
-    constraints = task.get("constraints", [])
+    # Handle both TaskInput objects and dicts
+    if hasattr(task, 'description'):
+        task_desc = task.description
+        task_type = task.task_type
+        constraints = task.constraints if hasattr(task, 'constraints') else []
+    else:
+        task_desc = task.get("description", "")
+        task_type = task.get("task_type", "")
+        constraints = task.get("constraints", [])
     
     prompt = f"""Task: {task_desc}
 Type: {task_type}

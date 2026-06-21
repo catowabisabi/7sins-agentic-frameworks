@@ -133,6 +133,7 @@ class TestSlowLLMFallback:
 
         from src.engines.seven_sins import WrathEngine
         from src.core.drive_engine import DriveType
+        from src.core.ego_core import TaskInput
 
         engine = WrathEngine()
 
@@ -151,7 +152,7 @@ class TestSlowLLMFallback:
             start = time.time()
             try:
                 engine.evaluate(
-                    {"description": "test", "task_type": "debug"},
+                    TaskInput(description="test", task_type="debug"),
                     {}
                 )
             except Exception:
