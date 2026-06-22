@@ -153,6 +153,43 @@ class PersistenceManager:
             for r in rows
         ]
     
+    def get_decision_logs(self, limit: int = 100) -> list:
+        """Retrieve recent decision logs.
+        
+        Args:
+            limit: Maximum number of logs to return (default 100)
+            
+        Returns:
+            List of decision log entries ordered by most recent first
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, timestamp, task_description, winning_drive, confidence, 
+                   eros_weight, thanatos_weight, weight_snapshot
+            FROM decision_log
+            ORDER BY id DESC
+            LIMIT ?
+        """, (limit,))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        return [
+            {
+                "id": r[0],
+                "timestamp": r[1],
+                "task_description": r[2],
+                "winning_drive": r[3],
+                "confidence": r[4],
+                "eros_weight": r[5],
+                "thanatos_weight": r[6],
+                "weight_snapshot": json.loads(r[7]) if r[7] else {}
+            }
+            for r in rows
+        ]
+
     def get_weight_history(self, drive_type: Optional[str] = None, limit: int = 100) -> list:
         """Retrieve drive weight history, optionally filtered by drive type"""
         conn = self._get_connection()

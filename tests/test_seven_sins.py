@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, List, Any
 
 from src.core.drive_engine import DriveType, DriveOpinion, DriveState, DriveEngine
+from src.core.ego_core import TaskInput
 from src.engines.seven_sins import (
     GluttonyEngine,
     LustEngine,
@@ -152,11 +153,11 @@ class TestGluttonyEngine:
     
     def test_gluttony_research_task(self, gluttony_engine):
         """Test Gluttony with research task type."""
-        task = {
-            "description": "Research AI safety techniques",
-            "task_type": "research_investigate",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Research AI safety techniques",
+            task_type="research_investigate",
+            constraints=[],
+        )
         context = {}
         
         opinion = gluttony_engine.evaluate(task, context)
@@ -169,11 +170,11 @@ class TestGluttonyEngine:
     
     def test_gluttony_creation_task(self, gluttony_engine):
         """Test Gluttony with creation task adjusts eros weight."""
-        task = {
-            "description": "Create a new research framework",
-            "task_type": "create_build_design_new",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Create a new research framework",
+            task_type="create_build_design_new",
+            constraints=[],
+        )
         context = {}
         
         initial_eros = gluttony_engine.state.eros_weight
@@ -184,11 +185,11 @@ class TestGluttonyEngine:
     
     def test_gluttony_deletion_task(self, gluttony_engine):
         """Test Gluttony with deletion task adjusts thanatos weight."""
-        task = {
-            "description": "Delete outdated research files",
-            "task_type": "delete_remove_destroy_cleanup",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Delete outdated research files",
+            task_type="delete_remove_destroy_cleanup",
+            constraints=[],
+        )
         context = {}
         
         opinion = gluttony_engine.evaluate(task, context)
@@ -223,11 +224,11 @@ class TestLustEngine:
     
     def test_lust_control_task(self, lust_engine):
         """Test Lust with control/architecture task."""
-        task = {
-            "description": "Design access control system",
-            "task_type": "create_architecture_control",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Design access control system",
+            task_type="create_architecture_control",
+            constraints=[],
+        )
         context = {}
         
         opinion = lust_engine.evaluate(task, context)
@@ -238,11 +239,11 @@ class TestLustEngine:
     
     def test_lust_resource_management_task(self, lust_engine):
         """Test Lust with resource management task."""
-        task = {
-            "description": "Manage system resources",
-            "task_type": "manage_resource_priority",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Manage system resources",
+            task_type="manage_resource_priority",
+            constraints=[],
+        )
         context = {}
         
         opinion = lust_engine.evaluate(task, context)
@@ -277,11 +278,11 @@ class TestGreedEngine:
     
     def test_greed_market_task(self, greed_engine):
         """Test Greed with market/value task."""
-        task = {
-            "description": "Analyze market opportunity",
-            "task_type": "market_value_strategy",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Analyze market opportunity",
+            task_type="market_value_strategy",
+            constraints=[],
+        )
         context = {}
         
         opinion = greed_engine.evaluate(task, context)
@@ -292,11 +293,11 @@ class TestGreedEngine:
     
     def test_greed_feature_task(self, greed_engine):
         """Test Greed with feature/growth task."""
-        task = {
-            "description": "Implement user growth feature",
-            "task_type": "create_feature_growth",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Implement user growth feature",
+            task_type="create_feature_growth",
+            constraints=[],
+        )
         context = {}
         
         opinion = greed_engine.evaluate(task, context)
@@ -331,11 +332,11 @@ class TestSlothEngine:
     
     def test_sloth_automation_task(self, sloth_engine):
         """Test Sloth with automation task."""
-        task = {
-            "description": "Automate repetitive task",
-            "task_type": "automation_script_tool",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Automate repetitive task",
+            task_type="automation_script_tool",
+            constraints=[],
+        )
         context = {}
         
         opinion = sloth_engine.evaluate(task, context)
@@ -346,11 +347,11 @@ class TestSlothEngine:
     
     def test_sloth_refactor_task(self, sloth_engine):
         """Test Sloth with refactor/efficiency task."""
-        task = {
-            "description": "Refactor code for efficiency",
-            "task_type": "refactor_efficiency",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Refactor code for efficiency",
+            task_type="refactor_efficiency",
+            constraints=[],
+        )
         context = {}
         
         opinion = sloth_engine.evaluate(task, context)
@@ -385,11 +386,11 @@ class TestPrideEngine:
     
     def test_pride_code_review_task(self, pride_engine):
         """Test Pride with code review task."""
-        task = {
-            "description": "Review code quality",
-            "task_type": "review_code_quality",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Review code quality",
+            task_type="review_code_quality",
+            constraints=[],
+        )
         context = {}
         
         opinion = pride_engine.evaluate(task, context)
@@ -400,11 +401,11 @@ class TestPrideEngine:
     
     def test_pride_refactor_task(self, pride_engine):
         """Test Pride with refactor/clean task."""
-        task = {
-            "description": "Clean up code",
-            "task_type": "refactor_clean_standard",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Clean up code",
+            task_type="refactor_clean_standard",
+            constraints=[],
+        )
         context = {}
         
         opinion = pride_engine.evaluate(task, context)
@@ -439,11 +440,11 @@ class TestWrathEngine:
     
     def test_wrath_bug_fix_task(self, wrath_engine):
         """Test Wrath with bug fix task."""
-        task = {
-            "description": "Fix critical bug",
-            "task_type": "fix_bug_error_debug",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Fix critical bug",
+            task_type="fix_bug_error_debug",
+            constraints=[],
+        )
         context = {}
         
         opinion = wrath_engine.evaluate(task, context)
@@ -454,11 +455,11 @@ class TestWrathEngine:
     
     def test_wrath_fault_task(self, wrath_engine):
         """Test Wrath with fault/crash task."""
-        task = {
-            "description": "Debug crash issue",
-            "task_type": "debug_fault_crash_fail",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Debug crash issue",
+            task_type="debug_fault_crash_fail",
+            constraints=[],
+        )
         context = {}
         
         opinion = wrath_engine.evaluate(task, context)
@@ -493,11 +494,11 @@ class TestEnvyEngine:
     
     def test_envy_benchmark_task(self, envy_engine):
         """Test Envy with benchmark task."""
-        task = {
-            "description": "Benchmark against competitors",
-            "task_type": "benchmark_competitor_compare",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Benchmark against competitors",
+            task_type="benchmark_competitor_compare",
+            constraints=[],
+        )
         context = {}
         
         opinion = envy_engine.evaluate(task, context)
@@ -508,11 +509,11 @@ class TestEnvyEngine:
     
     def test_envy_industry_task(self, envy_engine):
         """Test Envy with industry comparison task."""
-        task = {
-            "description": "Compare with industry best",
-            "task_type": "industry_best_standard",
-            "constraints": [],
-        }
+        task = TaskInput(
+            description="Compare with industry best",
+            task_type="industry_best_standard",
+            constraints=[],
+        )
         context = {}
         
         opinion = envy_engine.evaluate(task, context)
@@ -582,11 +583,11 @@ class TestSinEngineIsolation:
                     EnvyEngine(),
                 ]
                 
-                task = {
-                    "description": "Test task",
-                    "task_type": "create_build",
-                    "constraints": [],
-                }
+                task = TaskInput(
+                    description="Test task",
+                    task_type="create_build",
+                    constraints=[],
+                )
                 
                 for engine in engines:
                     opinion = engine.evaluate(task, {})
@@ -602,19 +603,19 @@ class TestSinEngineIsolation:
                 
                 # Gluttony should be activated by research tasks
                 gluttony = GluttonyEngine()
-                research_task = {"description": "Research AI", "task_type": "research_analyze", "constraints": []}
+                research_task = TaskInput(description="Research AI", task_type="research_analyze", constraints=[])
                 gluttony_opinion = gluttony.evaluate(research_task, {})
                 assert gluttony.state.confidence > 0, "Gluttony should activate for research tasks"
                 
                 # Wrath should be activated by bug/error tasks
                 wrath = WrathEngine()
-                bug_task = {"description": "Fix bug", "task_type": "fix_bug_debug", "constraints": []}
+                bug_task = TaskInput(description="Fix bug", task_type="fix_bug_debug", constraints=[])
                 wrath_opinion = wrath.evaluate(bug_task, {})
                 assert wrath.state.confidence > 0, "Wrath should activate for bug tasks"
                 
                 # Sloth should be activated by automation tasks
                 sloth = SlothEngine()
-                auto_task = {"description": "Automate task", "task_type": "automation_script", "constraints": []}
+                auto_task = TaskInput(description="Automate task", task_type="automation_script", constraints=[])
                 sloth_opinion = sloth.evaluate(auto_task, {})
                 assert sloth.state.confidence > 0, "Sloth should activate for automation tasks"
 

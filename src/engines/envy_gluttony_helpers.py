@@ -29,7 +29,7 @@ def inject_competitor_search(task: Dict[str, Any], context: Dict[str, Any]) -> N
     if is_competitive:
         try:
             search_tool = get_search_tool()
-            competitor_results = search_tool.search(task.get("description", ""), count=10)
+            competitor_results = search_tool.search(task.description, count=10)
             if competitor_results:
                 context["competitor_info"] = competitor_results
         except SearchUnavailableError:
@@ -50,7 +50,7 @@ def inject_research_context(task: Dict[str, Any], context: Dict[str, Any]) -> No
     if is_research:
         try:
             search_tool = get_search_tool()
-            search_results = search_tool.search(task.get("description", ""), count=10)
+            search_results = search_tool.search(task.description, count=10)
             if search_results:
                 context["search_results"] = search_results
         except SearchUnavailableError:
