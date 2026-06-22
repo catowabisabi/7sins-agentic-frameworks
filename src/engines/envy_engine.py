@@ -4,6 +4,7 @@ EnvyEngine - Competitive Analyst Drive Engine
 
 from typing import Dict, List, Any, Optional
 from src.core.drive_engine import DriveEngine, DriveType, DriveOpinion, FALLBACK_CONFIDENCE
+from src.engines.seven_sins import _get_task_type, _get_task_description
 
 
 __all__ = ['EnvyEngine']
@@ -38,8 +39,8 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
         self.state.activate(0.5)
         
         # Adjust Eros/Thanatos weights based on task type
-        task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
-        description = task.description if hasattr(task, 'description') else task.get('description', 'No description')
+        task_type = _get_task_type(task)
+        description = _get_task_description(task)
         self.execute(task_type)
         
         task_type = task_type.lower()

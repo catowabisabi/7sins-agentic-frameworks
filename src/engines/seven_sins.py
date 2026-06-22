@@ -14,6 +14,25 @@ from src.tools.search import get_search_tool, SearchUnavailableError
 
 logger = logging.getLogger(__name__)
 
+
+def _get_task_type(task) -> str:
+    """Normalize task_type from dict or dataclass/object."""
+    if hasattr(task, 'task_type'):
+        return task.task_type
+    if isinstance(task, dict):
+        return task.get('task_type', '')
+    return ''
+
+
+def _get_task_description(task) -> str:
+    """Normalize description from dict or dataclass/object."""
+    if hasattr(task, 'description'):
+        return task.description
+    if isinstance(task, dict):
+        return task.get('description', 'No description')
+    return 'No description'
+
+
 # Retry configuration
 MAX_RETRIES = 3
 INITIAL_BACKOFF = 1.0  # seconds
@@ -159,15 +178,9 @@ def _get_llm_provider() -> 'MiniMaxProvider':
 
 def _build_task_prompt(task: Dict[str, Any], context: Dict[str, Any], engine_name: str, specialization: List[str]) -> str:
     """Build a prompt for the LLM based on task and context"""
-    # Handle both TaskInput objects and dicts
-    if hasattr(task, 'description'):
-        task_desc = task.description
-        task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
-        constraints = task.constraints if hasattr(task, 'constraints') else []
-    else:
-        task_desc = task.get("description", "")
-        task_type = task.get("task_type", "")
-        constraints = task.get("constraints", [])
+    task_desc = _get_task_description(task)
+    task_type = _get_task_type(task)
+    constraints = task.constraints if hasattr(task, 'constraints') else task.get('constraints', [])
     
     prompt = f"""Task: {task_desc}
 Type: {task_type}
