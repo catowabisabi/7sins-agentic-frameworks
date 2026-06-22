@@ -37,6 +37,7 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
         
         # Adjust Eros/Thanatos weights based on task type
         task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
+        description = task.description if hasattr(task, 'description') else task.get('description', 'No description')
         self.execute(task_type)
         
         task_type = task_type.lower()
@@ -65,7 +66,7 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
             # Fallback to mock response on error after retries exhausted
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Research deeply: {getattr(task, 'description', 'No description')}",
+                opinion=f"Research deeply: {description}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Research deeply before execution",
                 risk_level="medium"

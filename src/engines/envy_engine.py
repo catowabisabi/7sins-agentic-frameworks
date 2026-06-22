@@ -39,6 +39,7 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
         
         # Adjust Eros/Thanatos weights based on task type
         task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
+        description = task.description if hasattr(task, 'description') else task.get('description', 'No description')
         self.execute(task_type)
         
         task_type = task_type.lower()
@@ -66,7 +67,7 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Benchmark check: {getattr(task, 'description', 'No description')}",
+                opinion=f"Benchmark check: {description}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Benchmark against best practices",
                 risk_level="medium"

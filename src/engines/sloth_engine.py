@@ -39,6 +39,7 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
         
         # Adjust Eros/Thanatos weights based on task type
         task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
+        description = task.description if hasattr(task, 'description') else task.get('description', 'No description')
         self.execute(task_type)
         
         task_type = task_type.lower()
@@ -63,7 +64,7 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Can be automated: {getattr(task, 'description', 'No description')}",
+                opinion=f"Can be automated: {description}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Automate the task or part of it",
                 risk_level="low"
