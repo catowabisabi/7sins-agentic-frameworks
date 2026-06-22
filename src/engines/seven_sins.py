@@ -162,7 +162,7 @@ def _build_task_prompt(task: Dict[str, Any], context: Dict[str, Any], engine_nam
     # Handle both TaskInput objects and dicts
     if hasattr(task, 'description'):
         task_desc = task.description
-        task_type = task.task_type
+        task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
         constraints = task.constraints if hasattr(task, 'constraints') else []
     else:
         task_desc = task.get("description", "")
