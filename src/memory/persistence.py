@@ -11,6 +11,17 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 
 
+
+def _parse_weight_snapshot(val):
+    """Parse weight_snapshot JSON string with fallback to empty dict on error."""
+    if not val:
+        return {}
+    try:
+        return json.loads(val)
+    except (json.JSONDecodeError, ValueError, TypeError):
+        return {}
+
+
 class PersistenceManager:
     """SQLite persistence for decision logs and drive weight history"""
     
@@ -148,7 +159,7 @@ class PersistenceManager:
                 "confidence": r[4],
                 "eros_weight": r[5],
                 "thanatos_weight": r[6],
-                "weight_snapshot": json.loads(r[7]) if r[7] else {}
+                "weight_snapshot": _parse_weight_snapshot(r[7])
             }
             for r in rows
         ]
@@ -185,7 +196,7 @@ class PersistenceManager:
                 "confidence": r[4],
                 "eros_weight": r[5],
                 "thanatos_weight": r[6],
-                "weight_snapshot": json.loads(r[7]) if r[7] else {}
+                "weight_snapshot": _parse_weight_snapshot(r[7])
             }
             for r in rows
         ]

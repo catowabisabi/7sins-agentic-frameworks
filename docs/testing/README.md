@@ -122,10 +122,33 @@ python -m pytest tests/performance/ -v
 1. **真實 LLM Provider 呼叫** — 現有測試全部使用 Mock，未覆蓋實際 MiniMax API
 2. **並發決策競爭條件** — 多執行緒同時調用 `process_task` 未測試
 3. **Persistence Manager 狀態一致性** — SQLite 並發寫入未測試
-4. **Search Tool 真實整合** — 僅 Mock，未測試真實搜索
+4. **Search Tool 真實整合** — 僅 Mock，未測試真實搜索（需要 BRAVE_SEARCH_API_KEY）
 5. **LLM 回應格式漂移** — `_parse_llm_opinion` 解析失敗未測試
 6. **磁碟寫滿 / 權限錯誤** — Audit log / persistence 無磁碟空間測試
 7. **EGO-Core 辯論循環** — 3 輪辯論共識失敗邊界未測試
+
+## 🟢 測試覆蓋更新（2026-06-22 00:18）
+
+|| 層級 | 測試數 | 通過 | 失敗 | 跳過 | 狀態 |
+||------|--------|------|------|------|------|
+|| A 煙霧測試 | 19 | 19 | 0 | 0 | ✅ |
+|| B 後端單元 | ~173 | ~173 | 0 | 0 | ✅ |
+|| C API契約 | 20 | 20 | 0 | 0 | ✅ |
+|| F 用戶流程E2E | 9 | 9 | 0 | 0 | ✅ |
+|| G Provider | 9 | 7 | 0 | 2 | ✅ |
+|| I 效能/穩定 | 6 | 6 | 0 | 0 | ✅ |
+|| **總計** | **~236** | **234** | **0** | **2** | **99.2%** |
+
+**重大修復（相對於 20260621_225519）**：
+- ✅ `_parse_llm_opinion` 參數類型（MockLLMResponse vs string）
+- ✅ WrathEngine `_llm_provider` → module-level `_get_llm_provider()` patch
+- ✅ `PersistenceManager.log_decision()` `weight_snapshot` 參數
+- ✅ `has_search_available()` 誤判（tool gettbl → `is_available` property）
+- ✅ 引擎 error handler `task.get()` → `getattr()` 全面修復（8 engine files）
+- ✅ Provider error handling tests 期望值調整（engine graceful degradation 行為）
+
+**環境依賴 skip（正常）**：
+- 2 tests（MINIMAX_API_KEY / BRAVE_SEARCH_API_KEY 未設定）
 
 ---
 

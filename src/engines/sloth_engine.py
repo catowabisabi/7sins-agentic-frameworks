@@ -63,7 +63,7 @@ Your ideal shortcut: A task solved by coordinating existing components rather th
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Can be automated: {task.get('description', 'No description')}",
+                opinion=f"Can be automated: {getattr(task, 'description', 'No description')}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Automate the task or part of it",
                 risk_level="low"

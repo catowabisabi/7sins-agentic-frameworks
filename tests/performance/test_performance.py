@@ -83,7 +83,8 @@ class TestPersistenceSurvival:
                 winning_drive=DriveType.WRATH.value,
                 confidence=0.85,
                 eros_weight=0.5,
-                thanatos_weight=0.5
+                thanatos_weight=0.5,
+                weight_snapshot={"wrath": 0.8, "pride": 0.2}
             )
 
             # Reinitialize
@@ -124,10 +125,14 @@ class TestMemoryLeakDetection:
 
 
 class TestSlowLLMFallback:
-    """I.6: Slow LLM handling."""
+    """I.6: Slow LLM handling.
 
-    def test_slow_llm_times_out(self):
-        """Slow LLM completes within reasonable time."""
+    Note: WrathEngine catches provider exceptions and returns a fallback DriveOpinion,
+    so the test verifies the engine completes within time even with slow provider.
+    """
+
+    def test_slow_llm_completes_within_time(self):
+        """Slow LLM completes within reasonable time via fallback."""
         from unittest.mock import Mock, patch
         import time
 
@@ -148,17 +153,19 @@ class TestSlowLLMFallback:
                 )
             return Resp()
 
-        with patch.object(engine, "_llm_provider", Mock(side_effect=slow_complete)):
+        mock_provider = Mock(side_effect=slow_complete)
+        # WrathEngine uses module-level _get_llm_provider(), not instance attribute
+        with patch("src.engines.seven_sins._get_llm_provider", return_value=mock_provider):
             start = time.time()
-            try:
-                engine.evaluate(
-                    TaskInput(description="test", task_type="debug"),
-                    {}
-                )
-            except Exception:
-                pass
+            result = engine.evaluate(
+                TaskInput(description="test", task_type="debug"),
+                {}
+            )
             elapsed = time.time() - start
+            # Engine returns fallback opinion (with retry), completes within 10s
             assert elapsed < 10.0, f"LLM call took too long: {elapsed:.2f}s"
+            # Should get a DriveOpinion (fallback on slow provider)
+            assert result is not None
 
 
 class TestMAGIVotingPerformance:
