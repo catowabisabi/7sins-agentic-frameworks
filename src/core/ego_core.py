@@ -161,7 +161,8 @@ class EGOCore:
         self.registry.reset_all()
         
         self.state.phase = DecisionPhase.CONSULTATION
-        relevant_drives = self.registry.get_by_task_type(task.task_type)
+        task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
+        relevant_drives = self.registry.get_by_task_type(task_type)
         self.state.active_drives = [d.drive_type for d in relevant_drives]
         
         for engine in relevant_drives:
@@ -629,7 +630,8 @@ class EGOCore:
         
         # Gate 3: Creation tasks with low Eros weight require human review
         if self.state.current_task:
-            task_type = self.state.current_task.task_type.lower()
+            current_task_type = self.state.current_task.task_type if hasattr(self.state.current_task, 'task_type') else self.state.current_task.get('task_type', '')
+            task_type = current_task_type.lower()
             is_creation = any(kw in task_type for kw in ["create", "build", "design", "new"])
             if is_creation:
                 eros_engine = self.registry.get(DriveType.EROS)

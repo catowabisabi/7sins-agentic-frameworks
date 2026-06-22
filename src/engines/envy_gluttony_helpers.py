@@ -23,7 +23,7 @@ def inject_competitor_search(task: Dict[str, Any], context: Dict[str, Any]) -> N
     analysis (e.g., 'competitor', 'benchmark', 'compare' keywords).
     Results are stored under context["competitor_info"].
     """
-    task_type = task.task_type.lower()
+    task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
     is_competitive = any(kw in task_type for kw in ["competitor", "benchmark", "compare"])
     
     if is_competitive:
@@ -44,7 +44,7 @@ def inject_research_context(task: Dict[str, Any], context: Dict[str, Any]) -> No
     (e.g., 'research', 'search', 'investigate' keywords).
     Results are stored under context["search_results"].
     """
-    task_type = task.task_type.lower()
+    task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
     is_research = any(kw in task_type for kw in ["research", "search", "investigate"])
     
     if is_research:
