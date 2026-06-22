@@ -39,6 +39,7 @@ Your ideal outcome: Clear ownership maps, explicit permission flows, auditable c
         
         # Adjust Eros/Thanatos weights based on task type
         task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
+        description = task.description if hasattr(task, 'description') else task.get('description', 'No description')
         self.execute(task_type)
         
         task_type = task_type.lower()
@@ -63,7 +64,7 @@ Your ideal outcome: Clear ownership maps, explicit permission flows, auditable c
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Controlled approach required for: {getattr(task, 'description', 'No description')}",
+                opinion=f"Controlled approach required for: {description}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Ensure systematic approach with clear ownership",
                 risk_level="low"

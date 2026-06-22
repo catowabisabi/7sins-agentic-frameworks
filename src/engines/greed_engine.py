@@ -39,6 +39,7 @@ You execute a mental arbitrage: seeking maximum value extraction per unit of inv
         
         # Adjust Eros/Thanatos weights based on task type
         task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
+        description = task.description if hasattr(task, 'description') else task.get('description', 'No description')
         self.execute(task_type)
         
         task_type = task_type.lower()
@@ -63,7 +64,7 @@ You execute a mental arbitrage: seeking maximum value extraction per unit of inv
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Value opportunity: {getattr(task, 'description', 'No description')}",
+                opinion=f"Value opportunity: {description}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Focus on delivering user value and market impact",
                 risk_level="medium"

@@ -39,6 +39,7 @@ Your standard: You will be remembered by the weakest thing you allowed to pass. 
         
         # Adjust Eros/Thanatos weights based on task type
         task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
+        description = task.description if hasattr(task, 'description') else task.get('description', 'No description')
         self.execute(task_type)
         
         task_type = task_type.lower()
@@ -63,7 +64,7 @@ Your standard: You will be remembered by the weakest thing you allowed to pass. 
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Quality demand: {getattr(task, 'description', 'No description')}",
+                opinion=f"Quality demand: {description}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Ensure high quality, proper standards",
                 risk_level="medium"
