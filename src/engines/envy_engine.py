@@ -38,9 +38,10 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
         self.state.activate(0.5)
         
         # Adjust Eros/Thanatos weights based on task type
-        self.execute(task.task_type)
+        task_type = task.task_type if hasattr(task, 'task_type') else task.get('task_type', '')
+        self.execute(task_type)
         
-        task_type = task.task_type.lower()
+        task_type = task_type.lower()
         eros_weight = self.state.eros_weight
         thanatos_weight = self.state.thanatos_weight
         
