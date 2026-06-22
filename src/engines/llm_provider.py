@@ -126,16 +126,16 @@ class LLMProviderRegistry:
     
     # Backward compatibility: class methods that delegate to default instance
     @classmethod
-    def register(cls, name: str, provider: LLMProvider):
+    def register_provider(cls, name: str, provider: LLMProvider):
         """Register a provider (class method, thread-safe)"""
         cls.get_instance().register(name, provider)
     
     @classmethod
-    def get(cls, name: str) -> Optional[LLMProvider]:
+    def get_provider(cls, name: str) -> Optional[LLMProvider]:
         """Get a provider by name (class method, thread-safe)"""
         return cls.get_instance().get(name)
     
     @classmethod
-    def list_providers(cls) -> List[str]:
+    def list_providers_(cls) -> List[str]:
         """List all registered provider names (class method, thread-safe)"""
         return cls.get_instance().list_providers()

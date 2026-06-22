@@ -131,5 +131,5 @@ def create_minimax_provider(api_key: str = None, model: str = "MiniMax-ABab6.5s"
         raise ValueError("MiniMax API key is required. Set MINIMAX_API_KEY environment variable or pass api_key parameter.")
     
     provider = MiniMaxProvider(api_key=api_key, model=model, group_id=group_id, **kwargs)
-    LLMProviderRegistry.register("minimax", provider)
+    LLMProviderRegistry.register_provider("minimax", provider)
     return provider

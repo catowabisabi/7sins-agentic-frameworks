@@ -141,7 +141,7 @@ class _MockLLMProvider:
 
 def _get_llm_provider() -> 'MiniMaxProvider':
     """Get or create the LLM provider instance"""
-    provider = LLMProviderRegistry.get("minimax")
+    provider = LLMProviderRegistry.get_provider("minimax")
     if provider is None:
         api_key = os.environ.get("MINIMAX_API_KEY", "")
         group_id = os.environ.get("MINIMAX_GROUP_ID", "")
