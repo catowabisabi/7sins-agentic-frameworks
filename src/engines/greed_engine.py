@@ -63,7 +63,7 @@ You execute a mental arbitrage: seeking maximum value extraction per unit of inv
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Value opportunity: {task.get('description', 'No description')}",
+                opinion=f"Value opportunity: {getattr(task, 'description', 'No description')}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Focus on delivering user value and market impact",
                 risk_level="medium"

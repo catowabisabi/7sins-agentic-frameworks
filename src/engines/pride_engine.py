@@ -63,7 +63,7 @@ Your standard: You will be remembered by the weakest thing you allowed to pass. 
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Quality demand: {task.get('description', 'No description')}",
+                opinion=f"Quality demand: {getattr(task, 'description', 'No description')}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Ensure high quality, proper standards",
                 risk_level="medium"

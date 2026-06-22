@@ -330,7 +330,7 @@ Your ideal outcome: Something new exists that didn't before. Value created. Life
             
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Eros assessment: {'Creation task' if is_creation else 'Destruction task' if is_destruction else 'General task'} - {task.get('description', '')}",
+                opinion=f"Eros assessment: {'Creation task' if is_creation else 'Destruction task' if is_destruction else 'General task'} - {getattr(task, 'description', '')}",
                 confidence=confidence,
                 recommendation=recommendation,
                 risk_level=risk_level
@@ -413,7 +413,7 @@ Your ideal outcome: Clean separation of what must go from what should stay. Obso
             
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Thanatos assessment: {'Destruction task' if is_destruction else 'Creation task' if is_creation else 'General task'} - {task.get('description', '')}",
+                opinion=f"Thanatos assessment: {'Destruction task' if is_destruction else 'Creation task' if is_creation else 'General task'} - {getattr(task, 'description', '')}",
                 confidence=confidence,
                 recommendation=recommendation,
                 risk_level=risk_level

@@ -63,7 +63,7 @@ Your standard: Any error present = fix required. No compromise, no 'good enough 
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Error check: {task.get('description', 'No description')}",
+                opinion=f"Error check: {getattr(task, 'description', str(task))}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Fix all errors before proceeding",
                 risk_level="high"

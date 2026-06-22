@@ -65,7 +65,7 @@ When evaluating a task, your veto triggers when: there exist critical knowledge 
             # Fallback to mock response on error after retries exhausted
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Research deeply: {task.get('description', 'No description')}",
+                opinion=f"Research deeply: {getattr(task, 'description', 'No description')}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Research deeply before execution",
                 risk_level="medium"

@@ -66,7 +66,7 @@ Your追问: 'Compared to what?' is never rhetorical — it demands a substantive
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Benchmark check: {task.get('description', 'No description')}",
+                opinion=f"Benchmark check: {getattr(task, 'description', 'No description')}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Benchmark against best practices",
                 risk_level="medium"

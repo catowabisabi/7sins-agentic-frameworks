@@ -63,7 +63,7 @@ Your ideal outcome: Clear ownership maps, explicit permission flows, auditable c
         except Exception as e:
             return DriveOpinion(
                 drive=self.drive_type,
-                opinion=f"Controlled approach required for: {task.get('description', 'No description')}",
+                opinion=f"Controlled approach required for: {getattr(task, 'description', 'No description')}",
                 confidence=FALLBACK_CONFIDENCE[self.drive_type],
                 recommendation="Ensure systematic approach with clear ownership",
                 risk_level="low"
